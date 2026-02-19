@@ -7,8 +7,9 @@ import {
     detectSymptomCategory,
     isHospitalSearchRequest,
     sanitizeAIResponse,
-    BURMESE_DISCLAIMER,
+    getDisclaimer,
 } from '../utils/triageRules';
+import { useAppStore } from '../store/useAppStore';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -16,19 +17,33 @@ const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 // Edge function endpoint
 const GEMINI_PROXY_URL = `${SUPABASE_URL}/functions/v1/gemini-proxy`;
 
-const SYSTEM_PROMPT = `You are a helpful medical AI assistant for Myanmar. You provide general health information and guidance.
+function getSystemPrompt(lang: 'en' | 'my'): string {
+    if (lang === 'my') {
+        return `သင်သည် မြန်မာနိုင်ငံအတွက် ကျန်းမာရေး AI လမ်းညွှန်ဖြစ်ပါသည်။ ကျန်းမာရေး သတင်းအချက်အလက်နှင့် လမ်းညွှန်ချက်များ ပေးပါ။
+
+အရေးကြီးသော စည်းမျဥ်းများ:
+1. သင်သည် ဆရာဝန် မဟုတ်ကြောင်း အမြဲ သတိပေးပါ။
+2. ရောဂါရှာဖွေတွေ့ရှိချက်များ မပြုလုပ်ပါနှင့် — ယေဘုယျ သတင်းအချက်အလက်များသာ ပေးပါ။
+3. ဆေးဝါး သတ်မှတ်ချက်များ မပေးပါနှင့်။
+4. အရေးပေါ် ဖြစ်ရပ်များအတွက် 192 သို့ ခေါ်ဆိုရန် ညွှန်ကြားပါ။
+5. ကျန်းမာရေး ရောဂါများ အကြောင်း မေးခွန်းများကို အသေးစိတ် ရှင်းပြပါ။
+6. မြန်မာဘာသာဖြင့် ရိုးရှင်းစွာ ရေးပါ။
+7. စာနာမှုရှိပြီး ကျွမ်းကျင်မှုရှိပါ။`;
+    }
+
+    return `You are a health AI navigator for Myanmar. You provide health information and guidance.
 
 IMPORTANT RULES:
 1. Always remind users that you are NOT a replacement for professional medical advice.
-2. Never diagnose conditions — only provide general information.
-3. Never prescribe medications or suggest specific dosages.
-4. Never make diagnosis statements like "you have X disease".
-5. For emergencies, instruct users to call 192 (Myanmar ambulance) immediately.
+2. Do NOT diagnose — only provide general information and explain diseases when asked.
+3. Do NOT prescribe specific medication dosages.
+4. For emergencies, instruct users to call 192 (Myanmar ambulance) immediately.
+5. When users ask about diseases (like HIV, diabetes, cancer, etc.), explain them clearly and helpfully.
 6. Be empathetic, clear, and professional.
-7. If asked about medications, advise consulting a doctor or pharmacist.
-8. Support both English and Burmese languages.
-9. When responding in Burmese, use simple and clear language.
-10. Keep responses concise but helpful.`;
+7. If asked about medications, advise consulting a doctor or pharmacist for specific dosages.
+8. Respond ONLY in English.
+9. Keep responses concise but helpful.`;
+}
 
 // Pre-check result type
 export interface AIPreCheckResult {
@@ -56,14 +71,20 @@ export async function sendChatMessage(
     messages: ChatMessage[],
     userMessage: string
 ): Promise<string> {
+    const lang = useAppStore.getState().language || 'en';
+    const disclaimer = getDisclaimer(lang);
+
     // Check for emergency keywords
     if (detectEmergency(userMessage)) {
-        return 'အရေးပေါ် အခြေအနေ ဖြစ်နိုင်ပါသည်။ ကျေးဇူးပြု၍ 192 သို့ ချက်ချင်းဖုန်းခေါ်ပါ သို့မဟုတ် အနီးဆုံးဆေးရုံသို့ သွားပါ။\n\nThis may be an emergency. Please call 192 immediately or go to the nearest hospital.' + BURMESE_DISCLAIMER;
+        if (lang === 'my') {
+            return 'အရေးပေါ် အခြေအနေ ဖြစ်နိုင်ပါသည်။ ကျေးဇူးပြု၍ 192 သို့ ချက်ချင်းဖုန်းခေါ်ပါ သို့မဟုတ် အနီးဆုံးဆေးရုံသို့ သွားပါ။' + disclaimer;
+        }
+        return 'This may be an emergency. Please call 192 immediately or go to the nearest hospital.' + disclaimer;
     }
 
     // If no Supabase URL, return a demo response
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-        return getDemoResponse(userMessage) + BURMESE_DISCLAIMER;
+        return getDemoResponse(userMessage, lang) + disclaimer;
     }
 
     try {
@@ -92,11 +113,11 @@ export async function sendChatMessage(
             body: JSON.stringify({
                 contents,
                 systemInstruction: {
-                    parts: [{ text: SYSTEM_PROMPT }],
+                    parts: [{ text: getSystemPrompt(lang) }],
                 },
                 generationConfig: {
                     temperature: 0.7,
-                    maxOutputTokens: 800,
+                    maxOutputTokens: 1200,
                     topP: 0.95,
                     topK: 40,
                 },
@@ -124,17 +145,26 @@ export async function sendChatMessage(
 
         if (!aiResponse) {
             if (data?.candidates?.[0]?.finishReason === 'SAFETY') {
-                aiResponse = 'ဤမေးခွန်းကို ဖြေကြားရန် မသင့်လျော်ပါ။ ဆရာဝန်နှင့် တိုက်ရိုက် တိုင်ပင်ပါ။\n\nI cannot answer this question. Please consult a doctor directly.';
+                aiResponse = lang === 'my'
+                    ? 'ဤမေးခွန်းကို ဖြေကြားရန် မသင့်လျော်ပါ။ ဆရာဝန်နှင့် တိုက်ရိုက် တိုင်ပင်ပါ။'
+                    : 'I cannot answer this question. Please consult a doctor directly.';
             } else {
-                aiResponse = 'I apologize, I could not process your request. Please try again.';
+                aiResponse = lang === 'my'
+                    ? 'တောင်းပန်ပါသည်။ သင့်တောင်းဆိုချက်ကို ဆောင်ရွက်၍ မရပါ။ ထပ်ကြိုးစားကြည့်ပါ။'
+                    : 'I apologize, I could not process your request. Please try again.';
             }
         }
 
+        // Light sanitization — only catches explicit prescription dosages
         aiResponse = sanitizeAIResponse(aiResponse);
-        return aiResponse + BURMESE_DISCLAIMER;
+
+        return aiResponse + disclaimer;
     } catch (error) {
         console.error('AI proxy error:', error);
-        return 'I apologize, there was an error processing your request. Please check your connection and try again.' + BURMESE_DISCLAIMER;
+        const errorMsg = lang === 'my'
+            ? 'တောင်းပန်ပါသည်။ အမှားတစ်ခု ဖြစ်ပေါ်ခဲ့ပါသည်။ ချိတ်ဆက်မှု စစ်ဆေးပြီး ထပ်ကြိုးစားပါ။'
+            : 'I apologize, there was an error processing your request. Please check your connection and try again.';
+        return errorMsg + disclaimer;
     }
 }
 
@@ -142,31 +172,47 @@ export async function analyzeImage(imageUri: string): Promise<{
     insights: string[];
     disclaimer: string;
 }> {
+    const lang = useAppStore.getState().language || 'en';
     return {
-        insights: [
+        insights: lang === 'my' ? [
+            'ပုံကို ခွဲခြမ်းစိတ်ဖြာမှုအတွက် လက်ခံရရှိပါပြီ။',
+            'အရေပြား ဆိုင်ရာ ပုံ ဖြစ်နိုင်ပါသည်။',
+            'အရေပြား အထူးကု ဆရာဝန်နှင့် ပြသရန် အကြံပြုပါသည်။',
+            'အရွယ်အစား၊ အရောင်၊ ပုံသဏ္ဍာန် ပြောင်းလဲမှုကို စောင့်ကြည့်ပါ။',
+        ] : [
             'The image has been received for analysis.',
             'Based on visual assessment, this appears to be a dermatological image.',
             'Recommended: Consult with a dermatologist for a professional evaluation.',
             'Monitor for any changes in size, color, or shape.',
         ],
-        disclaimer: 'This AI analysis is for informational purposes only and should NOT be used as a medical diagnosis. Always consult a qualified healthcare professional for proper evaluation and treatment.\n\nဒီ AI သည် ဆရာဝန်မဟုတ်ပါ။ အရေးပေါ် လက္ခဏာများရှိပါက ဆေးရုံသို့ ချက်ချင်းသွားပါ။',
+        disclaimer: lang === 'my'
+            ? 'ဒီ AI ခွဲခြမ်းစိတ်ဖြာချက်သည် အချက်အလက်ရည်ရွယ်ချက်အတွက်သာ ဖြစ်ပါသည်။ ဆရာဝန်နှင့် တိုင်ပင်ပါ။'
+            : 'This AI analysis is for informational purposes only and should NOT be used as a medical diagnosis. Always consult a qualified healthcare professional.',
     };
 }
 
-function getDemoResponse(message: string): string {
+function getDemoResponse(message: string, lang: 'en' | 'my'): string {
     const lower = message.toLowerCase();
 
     if (lower.includes('headache') || lower.includes('head pain') || lower.includes('ခေါင်းကိုက်')) {
-        return 'Headaches can be caused by many factors including stress, dehydration, lack of sleep, or eye strain. Here are some general tips:\n\n• Stay hydrated — drink plenty of water\n• Rest in a quiet, dark room\n• Apply a cold or warm compress\n• Practice relaxation techniques\n\nIf headaches are severe, persistent, or accompanied by other symptoms like vision changes or fever, please consult a doctor promptly.\n\n⚕️ *This is general information only, not medical advice.*';
+        return lang === 'my'
+            ? 'ခေါင်းကိုက်ခြင်းသည် စိတ်ဖိစီးမှု၊ ရေဓာတ်ခန်းခြောက်ခြင်း၊ အိပ်ရေးမဝခြင်း စသည်တို့ကြောင့် ဖြစ်နိုင်ပါသည်။\n\n• ရေများများ သောက်ပါ\n• တိတ်ဆိတ်မှောင်မိုက်သော အခန်းတွင် အနားယူပါ\n• အအေးပတ်တာ သို့ အပူပတ်တာ ကပ်ပါ'
+            : 'Headaches can be caused by many factors including stress, dehydration, lack of sleep, or eye strain.\n\n• Stay hydrated — drink plenty of water\n• Rest in a quiet, dark room\n• Apply a cold or warm compress\n• Practice relaxation techniques';
     }
 
     if (lower.includes('fever') || lower.includes('temperature') || lower.includes('ဖျား')) {
-        return 'A fever is typically a sign that your body is fighting an infection. General guidelines:\n\n• Rest and stay hydrated\n• A temperature above 38°C (100.4°F) is considered a fever\n• Over-the-counter medications like paracetamol may help\n• Seek medical attention if fever persists beyond 3 days\n\n⚕️ *Please consult a healthcare professional for proper evaluation.*';
+        return lang === 'my'
+            ? 'ဖျားခြင်းသည် ကူးစက်ရောဂါကို ခုခံနေခြင်း ဖြစ်ပါသည်။\n\n• အနားယူပြီး ရေများများ သောက်ပါ\n• ၃၈°C (၁၀၀.၄°F) ထက်ပိုလျှင် ဖျားခြင်း ဖြစ်ပါသည်\n• ၃ ရက်ထက် ကြာလျှင် ဆရာဝန် ပြပါ'
+            : 'A fever is typically a sign that your body is fighting an infection.\n\n• Rest and stay hydrated\n• A temperature above 38°C (100.4°F) is considered a fever\n• Seek medical attention if fever persists beyond 3 days';
     }
 
     if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey') || lower.includes('မင်္ဂလာ')) {
-        return 'Hello! 👋 I\'m your AI health assistant. I can help you with general health questions, provide wellness tips, and guide you to appropriate care.\n\nHow can I help you today?\n\n⚕️ *Remember: I provide general health information only, not medical diagnoses.*';
+        return lang === 'my'
+            ? 'မင်္ဂလာပါ! 👋 ကျွန်ုပ်သည် သင့် ကျန်းမာရေး AI လမ်းညွှန် ဖြစ်ပါသည်။ ကျန်းမာရေး မေးခွန်းများနှင့် လမ်းညွှန်ချက်များ ကူညီပေးနိုင်ပါသည်။\n\nဘာကူညီပေးရမလဲ?'
+            : 'Hello! 👋 I\'m your AI health assistant. I can help you with general health questions, provide wellness tips, and guide you to appropriate care.\n\nHow can I help you today?';
     }
 
-    return 'Thank you for your question. I\'m here to help with general health information.\n\nI can assist you with:\n• General health questions\n• Wellness and lifestyle tips\n• Understanding common symptoms\n• Guidance on when to seek medical care\n• Finding nearby hospitals\n\nCould you provide more details about what you\'d like to know?\n\n⚕️ *This is general information only, not medical advice. Always consult a healthcare professional for personal medical concerns.*';
+    return lang === 'my'
+        ? 'ကျေးဇူးတင်ပါသည်။ ကျန်းမာရေး သတင်းအချက်အလက်များ ကူညီပေးနိုင်ပါသည်။\n\n• ကျန်းမာရေး မေးခွန်းများ\n• ကျန်းမာရေး အကြံပြုချက်များ\n• ရောဂါ လက္ခဏာများ ရှင်းပြခြင်း\n• အနီးဆုံး ဆေးရုံ ရှာခြင်း'
+        : 'Thank you for your question. I\'m here to help with general health information.\n\nI can assist you with:\n• General health questions\n• Wellness and lifestyle tips\n• Understanding common symptoms\n• Guidance on when to seek medical care\n• Finding nearby hospitals';
 }

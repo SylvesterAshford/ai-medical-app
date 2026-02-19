@@ -364,15 +364,30 @@ export function containsBlockedContent(text: string): boolean {
 }
 
 export function sanitizeAIResponse(text: string): string {
-    if (containsBlockedContent(text)) {
-        return 'ကျေးဇူးပြု၍ ဤဆေးဝါး/ရောဂါဆိုင်ရာ အကြံပြုချက်အတွက် ဆရာဝန်နှင့် တိုက်ရိုက်တိုင်ပင်ပါ။\n\nPlease consult a doctor directly for this medication/diagnosis advice.';
+    // Only block genuinely dangerous content (explicit prescriptions with dosages)
+    // Don't block general health information or disease explanations
+    const dangerousPatterns = [
+        /take\s+\d+\s*(?:mg|ml|tablet|pill|capsule)\s+(?:once|twice|daily|every)/i,
+        /dosage\s*(?:is|:)\s*\d+\s*(?:mg|ml)/i,
+        /i\s+diagnose\s+you\s+with/i,
+    ];
+
+    const hasDangerousContent = dangerousPatterns.some(p => p.test(text));
+    if (hasDangerousContent) {
+        // Append a note instead of replacing the whole response
+        return text + '\n\n⚠️ Note: Please consult a doctor for specific medication dosages and diagnosis.';
     }
     return text;
 }
 
-// Burmese disclaimer appended to every AI response
-export const BURMESE_DISCLAIMER =
-    '\n\nဒီ AI သည် ဆရာဝန်မဟုတ်ပါ။ အရေးပေါ် လက္ခဏာများရှိပါက ဆေးရုံသို့ ချက်ချင်းသွားပါ။';
+// Language-aware disclaimer
+export function getDisclaimer(lang: 'en' | 'my'): string {
+    if (lang === 'my') {
+        return '\n\n⚕️ ဒီ AI သည် ဆရာဝန်မဟုတ်ပါ။ အရေးပေါ် လက္ခဏာများရှိပါက ဆေးရုံသို့ ချက်ချင်းသွားပါ။';
+    }
+    return '\n\n⚕️ This AI is not a doctor. If you have emergency symptoms, go to the hospital immediately.';
+}
 
 // Myanmar emergency number
 export const MYANMAR_EMERGENCY_NUMBER = '192';
+

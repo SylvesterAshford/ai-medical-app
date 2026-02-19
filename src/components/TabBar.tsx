@@ -5,18 +5,21 @@ import { View, TouchableOpacity, Text, StyleSheet, Dimensions } from 'react-nati
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography, shadows, gradients } from '../theme';
+import { useAppStore } from '../store/useAppStore';
+import { t } from '../utils/translations';
 
 const { width } = Dimensions.get('window');
 
 const TAB_CONFIG = [
-  { name: 'Home', icon: 'home', iconOutline: 'home-outline', label: 'Home' },
-  { name: 'HealthTools', icon: 'calendar', iconOutline: 'calendar-outline', label: 'Tools' },
-  { name: 'Chat', icon: 'chatbubble-ellipses', iconOutline: 'chatbubble-ellipses-outline', label: 'Chat', isCenter: true },
-  { name: 'ImageAnalysis', icon: 'image', iconOutline: 'image-outline', label: 'Scan' },
-  { name: 'Profile', icon: 'settings', iconOutline: 'settings-outline', label: 'Profile' },
+  { name: 'Home', icon: 'home', iconOutline: 'home-outline', labelKey: 'tab.home' as const },
+  { name: 'HealthTools', icon: 'calendar', iconOutline: 'calendar-outline', labelKey: 'tab.tools' as const },
+  { name: 'Chat', icon: 'chatbubble-ellipses', iconOutline: 'chatbubble-ellipses-outline', labelKey: 'tab.chat' as const, isCenter: true },
+  { name: 'ImageAnalysis', icon: 'image', iconOutline: 'image-outline', labelKey: 'tab.scan' as const },
+  { name: 'Profile', icon: 'settings', iconOutline: 'settings-outline', labelKey: 'tab.profile' as const },
 ];
 
 export default function TabBar({ state, descriptors, navigation }: any) {
+  const language = useAppStore(s => s.language);
   return (
     <View style={styles.container}>
       <View style={styles.bar}>
@@ -78,7 +81,7 @@ export default function TabBar({ state, descriptors, navigation }: any) {
                   { color: isFocused ? colors.tabActive : colors.tabInactive },
                 ]}
               >
-                {config?.label}
+                {t(config?.labelKey || 'tab.home', language)}
               </Text>
             </TouchableOpacity>
           );

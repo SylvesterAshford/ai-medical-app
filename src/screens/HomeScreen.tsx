@@ -13,6 +13,7 @@ import GradientButton from '../components/GradientButton';
 import { colors, spacing, typography, borderRadius, shadows, gradients } from '../theme';
 import { useAppStore } from '../store/useAppStore';
 import { getGreeting } from '../utils';
+import { t } from '../utils/translations';
 
 const { width } = Dimensions.get('window');
 
@@ -37,7 +38,7 @@ function FeatureCard({ icon, title, subtitle, onPress, iconBg, hasArrow, hasButt
         <Text style={styles.featureSubtitle}>{subtitle}</Text>
         {hasButton && (
           <GradientButton
-            title="Start Talking"
+            title={title}
             onPress={onPress}
             size="small"
             style={styles.featureBtn}
@@ -79,6 +80,7 @@ function TopicCard({ title, description, onPress }: TopicCardProps) {
 
 export default function HomeScreen({ navigation }: any) {
   const user = useAppStore(s => s.user);
+  const language = useAppStore(s => s.language);
   const greeting = getGreeting();
 
   return (
@@ -100,9 +102,11 @@ export default function HomeScreen({ navigation }: any) {
               <View style={styles.avatar}>
                 <Ionicons name="person" size={24} color={colors.teal} />
               </View>
-              <View>
+            <View>
                 <Text style={styles.headerLabel}>MediAI</Text>
-                <Text style={styles.headerSubLabel}>Welcome Back</Text>
+                <Text style={styles.headerSubLabel}>
+                  {language === 'my' ? 'ပြန်လည်ကြိုဆိုပါသည်' : 'Welcome Back'}
+                </Text>
               </View>
             </View>
             <TouchableOpacity style={styles.notifBell}>
@@ -111,31 +115,31 @@ export default function HomeScreen({ navigation }: any) {
           </View>
 
           <Text style={styles.greeting}>
-            {greeting} How{'\n'}can I help you?
+            {language === 'my'
+              ? `${greeting} ဘာ${'\n'}ကူညီပေးရမလဲ?`
+              : `${greeting} How${'\n'}can I help you?`}
           </Text>
         </LinearGradient>
 
         {/* Feature Cards Grid */}
         <View style={styles.cardsSection}>
           <View style={styles.cardsRow}>
-            {/* Left — Talk to AI (tall card) */}
             <View style={styles.leftCard}>
               <FeatureCard
                 icon="chatbubble-ellipses"
-                title="Talk to AI assistant"
-                subtitle="Let's try it now"
+                title={language === 'my' ? 'AI နှင့် စကားပြော' : 'Talk to AI assistant'}
+                subtitle={language === 'my' ? 'စမ်းကြည့်ရအောင်' : "Let's try it now"}
                 onPress={() => navigation.navigate('Chat')}
                 iconBg={colors.accentGradientStart}
                 hasButton
               />
             </View>
 
-            {/* Right column — 2 cards stacked */}
             <View style={styles.rightColumn}>
               <FeatureCard
                 icon="body"
-                title="BMI Check"
-                subtitle="Calculate body mass index"
+                title={language === 'my' ? 'BMI စစ်ဆေးရန်' : 'BMI Check'}
+                subtitle={language === 'my' ? 'ခန္ဓာကိုယ်ထုထည်ညွှန်း' : 'Calculate body mass index'}
                 onPress={() => navigation.navigate('HealthTools')}
                 iconBg={colors.teal}
                 hasArrow
@@ -143,8 +147,8 @@ export default function HomeScreen({ navigation }: any) {
               <View style={{ height: spacing.md }} />
               <FeatureCard
                 icon="image"
-                title="Image Analysis"
-                subtitle="Analyze your health-related images"
+                title={language === 'my' ? 'ပုံခွဲခြမ်းစိတ်ဖြာ' : 'Image Analysis'}
+                subtitle={language === 'my' ? 'ကျန်းမာရေးပုံများ ခွဲခြမ်း' : 'Analyze your health-related images'}
                 onPress={() => navigation.navigate('ImageAnalysis')}
                 iconBg={colors.teal}
                 hasArrow
@@ -155,9 +159,9 @@ export default function HomeScreen({ navigation }: any) {
 
         {/* Topics Section */}
         <View style={styles.topicsHeader}>
-          <Text style={styles.topicsTitle}>Topics</Text>
+          <Text style={styles.topicsTitle}>{language === 'my' ? 'ခေါင်းစဉ်များ' : 'Topics'}</Text>
           <TouchableOpacity>
-            <Text style={styles.seeAll}>See All</Text>
+            <Text style={styles.seeAll}>{language === 'my' ? 'အားလုံးကြည့်' : 'See All'}</Text>
           </TouchableOpacity>
         </View>
 
@@ -167,23 +171,23 @@ export default function HomeScreen({ navigation }: any) {
           contentContainerStyle={styles.topicsRow}
         >
           <TopicCard
-            title="What is blood pressure?"
-            description="Blood pressure measures the force of blood against artery walls..."
+            title={language === 'my' ? 'သွေးတိုးဆိုတာ ဘာလဲ?' : 'What is blood pressure?'}
+            description={language === 'my' ? 'သွေးတိုးသည် သွေးကြောနံရံကို ဖိအားတိုင်းတာခြင်း...' : 'Blood pressure measures the force of blood against artery walls...'}
             onPress={() => {}}
           />
           <TopicCard
-            title="Why is sleep important?"
-            description="Quality sleep helps repair the body and supports immune function..."
+            title={language === 'my' ? 'အိပ်စက်ခြင်း ဘာကြောင့် အရေးကြီးလဲ?' : 'Why is sleep important?'}
+            description={language === 'my' ? 'အိပ်ရေးကောင်းခြင်းသည် ခန္ဓာကိုယ်ကို ပြုပြင်ပေးသည်...' : 'Quality sleep helps repair the body and supports immune function...'}
             onPress={() => {}}
           />
           <TopicCard
-            title="Heart health basics"
-            description="Learn about maintaining a healthy heart through diet and exercise..."
+            title={language === 'my' ? 'နှလုံးကျန်းမာရေး အခြေခံ' : 'Heart health basics'}
+            description={language === 'my' ? 'အစားအသောက်နှင့် လေ့ကျင့်ခန်းဖြင့် နှလုံးကျန်းမာအောင်...' : 'Learn about maintaining a healthy heart through diet and exercise...'}
             onPress={() => {}}
           />
           <TopicCard
-            title="Managing stress"
-            description="Chronic stress affects both mental and physical health. Learn coping strategies..."
+            title={language === 'my' ? 'စိတ်ဖိစီးမှု စီမံခန့်ခွဲခြင်း' : 'Managing stress'}
+            description={language === 'my' ? 'နာတာရှည် စိတ်ဖိစီးမှုသည် စိတ်ပိုင်းနှင့် ခန္ဓာကိုယ်ကို ထိခိုက်...' : 'Chronic stress affects both mental and physical health...'}
             onPress={() => {}}
           />
         </ScrollView>

@@ -13,6 +13,7 @@ import GradientButton from '../components/GradientButton';
 import { colors, spacing, typography, borderRadius, shadows, gradients } from '../theme';
 import { calculateBMI } from '../utils';
 import { BMIResult } from '../types';
+import { useAppStore } from '../store/useAppStore';
 
 const { width } = Dimensions.get('window');
 
@@ -20,6 +21,7 @@ export default function HealthToolsScreen({ navigation }: any) {
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
   const [bmiResult, setBmiResult] = useState<BMIResult | null>(null);
+  const language = useAppStore(s => s.language);
 
   const handleCalculateBMI = () => {
     const w = parseFloat(weight);
@@ -41,9 +43,9 @@ export default function HealthToolsScreen({ navigation }: any) {
           colors={[...gradients.header]}
           style={styles.header}
         >
-          <Text style={styles.headerTitle}>Health Tools</Text>
+          <Text style={styles.headerTitle}>{language === 'my' ? 'ကျန်းမာရေး ကိရိယာများ' : 'Health Tools'}</Text>
           <Text style={styles.headerSubtitle}>
-            Track and monitor your health metrics
+            {language === 'my' ? 'ကျန်းမာရေး အချက်အလက်များ စစ်ဆေးပါ' : 'Track and monitor your health metrics'}
           </Text>
         </LinearGradient>
 
@@ -53,13 +55,13 @@ export default function HealthToolsScreen({ navigation }: any) {
             <View style={styles.sectionIconWrap}>
               <Ionicons name="body" size={20} color={colors.teal} />
             </View>
-            <Text style={styles.sectionTitle}>BMI Calculator</Text>
+            <Text style={styles.sectionTitle}>{language === 'my' ? 'BMI တွက်စက်' : 'BMI Calculator'}</Text>
           </View>
 
           <Card>
             <View style={styles.inputRow}>
               <View style={styles.inputWrap}>
-                <Text style={styles.inputLabel}>Weight (kg)</Text>
+                <Text style={styles.inputLabel}>{language === 'my' ? 'ကိုယ်အလေးချိန် (kg)' : 'Weight (kg)'}</Text>
                 <View style={styles.inputBox}>
                   <TextInput
                     style={styles.input}
@@ -73,7 +75,7 @@ export default function HealthToolsScreen({ navigation }: any) {
                 </View>
               </View>
               <View style={styles.inputWrap}>
-                <Text style={styles.inputLabel}>Height (cm)</Text>
+                <Text style={styles.inputLabel}>{language === 'my' ? 'အရပ် (cm)' : 'Height (cm)'}</Text>
                 <View style={styles.inputBox}>
                   <TextInput
                     style={styles.input}
@@ -89,7 +91,7 @@ export default function HealthToolsScreen({ navigation }: any) {
             </View>
 
             <GradientButton
-              title="Calculate BMI"
+              title={language === 'my' ? 'BMI တွက်ပါ' : 'Calculate BMI'}
               onPress={handleCalculateBMI}
               size="medium"
               gradient={[...gradients.teal]}
@@ -137,16 +139,16 @@ export default function HealthToolsScreen({ navigation }: any) {
             <View style={styles.sectionIconWrap}>
               <Ionicons name="search" size={20} color={colors.accentGradientStart} />
             </View>
-            <Text style={styles.sectionTitle}>Symptom Checker</Text>
+            <Text style={styles.sectionTitle}>{language === 'my' ? 'ရောဂါလက္ခဏာ စစ်ဆေးရန်' : 'Symptom Checker'}</Text>
           </View>
 
           <TouchableOpacity onPress={() => navigation.navigate('Chat')} activeOpacity={0.85}>
             <Card style={styles.toolCard}>
               <View style={styles.toolCardContent}>
                 <View>
-                  <Text style={styles.toolCardTitle}>Check Your Symptoms</Text>
+                  <Text style={styles.toolCardTitle}>{language === 'my' ? 'ရောဂါလက္ခဏာ စစ်ဆေးပါ' : 'Check Your Symptoms'}</Text>
                   <Text style={styles.toolCardDesc}>
-                    Describe your symptoms to our AI assistant for preliminary guidance
+                    {language === 'my' ? 'AI လမ်းညွှန်ချက်အတွက် ရောဂါလက္ခဏာများ ဖော်ပြပါ' : 'Describe your symptoms to our AI assistant for preliminary guidance'}
                   </Text>
                 </View>
                 <View style={styles.toolArrow}>
@@ -163,7 +165,7 @@ export default function HealthToolsScreen({ navigation }: any) {
             <View style={styles.sectionIconWrap}>
               <Ionicons name="heart" size={20} color="#E17055" />
             </View>
-            <Text style={styles.sectionTitle}>Health Risk Assessment</Text>
+            <Text style={styles.sectionTitle}>{language === 'my' ? 'ကျန်းမာရေးအန္တရာယ် အကဲဖြတ်ခြင်း' : 'Health Risk Assessment'}</Text>
           </View>
 
           <Card style={styles.toolCard}>
@@ -172,19 +174,19 @@ export default function HealthToolsScreen({ navigation }: any) {
                 <View style={[styles.riskIcon, { backgroundColor: '#FFE8E0' }]}>
                   <Ionicons name="heart" size={24} color="#E17055" />
                 </View>
-                <Text style={styles.riskLabel}>Heart Health</Text>
+                <Text style={styles.riskLabel}>{language === 'my' ? 'နှလုံးကျန်းမာရေး' : 'Heart Health'}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.riskItem}>
                 <View style={[styles.riskIcon, { backgroundColor: '#E8F8F8' }]}>
                   <Ionicons name="water" size={24} color={colors.teal} />
                 </View>
-                <Text style={styles.riskLabel}>Diabetes Risk</Text>
+                <Text style={styles.riskLabel}>{language === 'my' ? 'ဆီးချိုအန္တရာယ်' : 'Diabetes Risk'}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.riskItem}>
                 <View style={[styles.riskIcon, { backgroundColor: '#F0E8FF' }]}>
                   <Ionicons name="fitness" size={24} color={colors.accentGradientStart} />
                 </View>
-                <Text style={styles.riskLabel}>Fitness Score</Text>
+                <Text style={styles.riskLabel}>{language === 'my' ? 'ကြံ့ခိုင်မှုအမှတ်' : 'Fitness Score'}</Text>
               </TouchableOpacity>
             </View>
           </Card>
@@ -192,13 +194,15 @@ export default function HealthToolsScreen({ navigation }: any) {
 
         {/* Tips Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Daily Health Tips</Text>
+          <Text style={styles.sectionTitle}>{language === 'my' ? 'နေ့စဉ်ကျန်းမာရေး အကြံပြုချက်' : 'Daily Health Tips'}</Text>
           <Card style={styles.tipCard}>
             <Ionicons name="bulb" size={22} color="#FDCB6E" />
             <View style={styles.tipContent}>
-              <Text style={styles.tipTitle}>Stay Hydrated</Text>
+              <Text style={styles.tipTitle}>{language === 'my' ? 'ရေများများ သောက်ပါ' : 'Stay Hydrated'}</Text>
               <Text style={styles.tipDesc}>
-                Drink at least 8 glasses of water daily. Proper hydration supports all body functions.
+                {language === 'my'
+                  ? 'တစ်နေ့လျှင် ရေ ၈ ခွက်အနည်းဆုံး သောက်ပါ။ ရေဓာတ်ပြည့်ဝခြင်းသည် ခန္ဓာကိုယ်လုပ်ငန်းအားလုံးကို ပံ့ပိုးပေးပါသည်။'
+                  : 'Drink at least 8 glasses of water daily. Proper hydration supports all body functions.'}
               </Text>
             </View>
           </Card>

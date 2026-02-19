@@ -22,6 +22,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export default function EmergencyScreen() {
   const navigation = useNavigation<NavigationProp>();
   const setEmergencyMode = useAppStore(s => s.setEmergencyMode);
+  const language = useAppStore(s => s.language);
 
   const handleCallEmergency = () => {
     const phoneUrl = Platform.OS === 'ios'
@@ -59,17 +60,11 @@ export default function EmergencyScreen() {
 
           {/* Main Burmese text */}
           <Text style={styles.mainTextMy}>
-            အရေးပေါ် ဖြစ်နိုင်ပါသည်
-          </Text>
-          <Text style={styles.mainTextEn}>
-            This may be an emergency
+            {language === 'my' ? 'အရေးပေါ် ဖြစ်နိုင်ပါသည်' : 'This may be an emergency'}
           </Text>
 
           <Text style={styles.subtextMy}>
-            ချက်ချင်း ဆေးဝါးကူညီမှု လိုအပ်နိုင်ပါသည်
-          </Text>
-          <Text style={styles.subtextEn}>
-            You may need immediate medical assistance
+            {language === 'my' ? 'ချက်ချင်း ဆေးဝါးကူညီမှု လိုအပ်နိုင်ပါသည်' : 'You may need immediate medical assistance'}
           </Text>
         </View>
 
@@ -92,8 +87,12 @@ export default function EmergencyScreen() {
                   <Ionicons name="call" size={28} color="#D4A843" />
                 </View>
                 <View>
-                  <Text style={styles.emergencyBtnText}>Call {MYANMAR_EMERGENCY_NUMBER}</Text>
-                  <Text style={styles.emergencyBtnSub}>လူနာတင်ယာဉ် ခေါ်မည်</Text>
+                  <Text style={styles.emergencyBtnText}>
+                    {language === 'my' ? `${MYANMAR_EMERGENCY_NUMBER} သို့ ခေါ်ဆိုပါ` : `Call ${MYANMAR_EMERGENCY_NUMBER}`}
+                  </Text>
+                  <Text style={styles.emergencyBtnSub}>
+                    {language === 'my' ? 'လူနာတင်ယာဉ် ခေါ်မည်' : 'Call ambulance'}
+                  </Text>
                 </View>
               </View>
             </LinearGradient>
@@ -113,9 +112,8 @@ export default function EmergencyScreen() {
             >
               <Ionicons name="location" size={22} color={colors.white} />
               <Text style={styles.hospitalBtnText}>
-                အနီးဆုံး ဆေးရုံ ရှာမည်
+                {language === 'my' ? 'အနီးဆုံး ဆေးရုံ ရှာမည်' : 'Find Nearest Hospital'}
               </Text>
-              <Text style={styles.hospitalBtnSub}>Find Nearest Hospital</Text>
             </LinearGradient>
           </TouchableOpacity>
 
@@ -126,14 +124,18 @@ export default function EmergencyScreen() {
             style={styles.backBtn}
           >
             <Ionicons name="chatbubble-ellipses" size={18} color={colors.textSecondary} />
-            <Text style={styles.backBtnText}>Chat သို့ ပြန်သွားမည်</Text>
+            <Text style={styles.backBtnText}>
+              {language === 'my' ? 'Chat သို့ ပြန်သွားမည်' : 'Back to Chat'}
+            </Text>
           </TouchableOpacity>
         </View>
 
         {/* Disclaimer */}
         <View style={styles.disclaimerSection}>
           <Text style={styles.disclaimerText}>
-            ဒီ AI သည် ဆရာဝန်မဟုတ်ပါ။ အရေးပေါ် အခြေအနေတွင် ဆေးရုံသို့ ချက်ချင်းသွားပါ။
+            {language === 'my'
+              ? 'ဒီ AI သည် ဆရာဝန်မဟုတ်ပါ။ အရေးပေါ် အခြေအနေတွင် ဆေးရုံသို့ ချက်ချင်းသွားပါ။'
+              : 'This AI is not a doctor. In an emergency, go to the hospital immediately.'}
           </Text>
         </View>
       </LinearGradient>

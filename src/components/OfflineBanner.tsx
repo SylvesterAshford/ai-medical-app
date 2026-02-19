@@ -8,6 +8,7 @@ import { colors, spacing, borderRadius } from '../theme';
 
 export default function OfflineBanner() {
   const isOffline = useAppStore(s => s.isOffline);
+  const language = useAppStore(s => s.language);
 
   if (!isOffline) return null;
 
@@ -15,7 +16,9 @@ export default function OfflineBanner() {
     <View style={styles.banner}>
       <Ionicons name="cloud-offline" size={16} color="#9A7B2C" />
       <Text style={styles.text}>
-        Offline mode – ဆေးရုံ ရှာဖွေမှု ရနိုင်ပါသည်
+        {language === 'my'
+          ? 'အော့ဖ်လိုင်း — ဆေးရုံ ရှာဖွေမှု ရနိုင်ပါသည်'
+          : 'Offline mode — Hospital search available'}
       </Text>
     </View>
   );

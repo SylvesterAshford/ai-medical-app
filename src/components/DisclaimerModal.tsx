@@ -6,7 +6,8 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, borderRadius, spacing, typography, shadows } from '../theme';
 import GradientButton from './GradientButton';
-import { MEDICAL_DISCLAIMER } from '../utils';
+import { useAppStore } from '../store/useAppStore';
+import { t } from '../utils/translations';
 
 interface Props {
   visible: boolean;
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function DisclaimerModal({ visible, onAccept }: Props) {
+  const language = useAppStore(s => s.language);
   return (
     <Modal
       visible={visible}
@@ -27,28 +29,28 @@ export default function DisclaimerModal({ visible, onAccept }: Props) {
             <Ionicons name="medical" size={36} color={colors.teal} />
           </View>
 
-          <Text style={styles.title}>Medical Disclaimer</Text>
+          <Text style={styles.title}>{t('disclaimer.title', language)}</Text>
 
-          <Text style={styles.body}>{MEDICAL_DISCLAIMER}</Text>
+          <Text style={styles.body}>{t('disclaimer.body', language)}</Text>
 
           <View style={styles.divider} />
 
           <View style={styles.checkRow}>
             <Ionicons name="shield-checkmark" size={20} color={colors.success} />
             <Text style={styles.checkText}>
-              Your conversations are private and secure
+              {language === 'my' ? 'သင့်စကားပြောမှုများသည် လုံခြုံပါသည်' : 'Your conversations are private and secure'}
             </Text>
           </View>
 
           <View style={styles.checkRow}>
             <Ionicons name="alert-circle" size={20} color={colors.warning} />
             <Text style={styles.checkText}>
-              For emergencies, always call local emergency services
+              {language === 'my' ? 'အရေးပေါ်အတွက် 192 သို့ ခေါ်ဆိုပါ' : 'For emergencies, always call local emergency services'}
             </Text>
           </View>
 
           <GradientButton
-            title="I Understand"
+            title={t('disclaimer.accept', language)}
             onPress={onAccept}
             size="large"
             style={styles.button}

@@ -10,6 +10,7 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import GradientButton from '../components/GradientButton';
 import { colors, spacing, typography, borderRadius, shadows, gradients } from '../theme';
+import { useAppStore } from '../store/useAppStore';
 
 const { width, height } = Dimensions.get('window');
 
@@ -55,26 +56,27 @@ function PlanCard({ name, price, period, features, isBestOffer, isSelected, onSe
 
 export default function SubscriptionScreen({ navigation }: any) {
   const [selectedPlan, setSelectedPlan] = useState(1);
+  const language = useAppStore(s => s.language);
 
   const plans = [
     {
-      name: 'Weekly',
+      name: language === 'my' ? 'အပတ်စဉ်' : 'Weekly',
       price: '$2.99',
-      period: '7 days',
+      period: language === 'my' ? '၇ ရက်' : '7 days',
       features: [],
       isBestOffer: false,
     },
     {
-      name: 'Monthly',
+      name: language === 'my' ? 'လစဉ်' : 'Monthly',
       price: '$7.99',
-      period: '30 days',
+      period: language === 'my' ? '၃၀ ရက်' : '30 days',
       features: [],
       isBestOffer: true,
     },
     {
-      name: 'Yearly',
+      name: language === 'my' ? 'နှစ်စဉ်' : 'Yearly',
       price: '$49.99',
-      period: '365 days',
+      period: language === 'my' ? '၃၆၅ ရက်' : '365 days',
       features: [],
       isBestOffer: false,
     },
@@ -103,9 +105,9 @@ export default function SubscriptionScreen({ navigation }: any) {
             <View style={styles.crownCircle}>
               <Ionicons name="diamond" size={32} color="#FDCB6E" />
             </View>
-            <Text style={styles.title}>Subscription</Text>
+            <Text style={styles.title}>{language === 'my' ? 'စာရင်းသွင်းခြင်း' : 'Subscription'}</Text>
             <Text style={styles.subtitle}>
-              Get unlimited access to all features
+              {language === 'my' ? 'အချက်အလက်အားလုံးကို အကန့်အသတ်မဲ့ ရယူပါ' : 'Get unlimited access to all features'}
             </Text>
           </View>
 
@@ -123,15 +125,22 @@ export default function SubscriptionScreen({ navigation }: any) {
 
           {/* Features list */}
           <View style={styles.featuresSection}>
-            <Text style={styles.featuresTitle}>What's included</Text>
-            {[
+            <Text style={styles.featuresTitle}>{language === 'my' ? 'ပါဝင်သည့်အရာများ' : "What's included"}</Text>
+            {(language === 'my' ? [
+              'AI စကားပြောခြင်း အကန့်မဲ့',
+              'အဆင့်မြင့် ပုံခွဲခြမ်း',
+              'သာလူအရင် တုံ့ပြန်ချိန်',
+              'ကျန်းမာရေး ရပို့ ထုတ်ယူခြင်း',
+              'ကြော်ညာကင်း အသုံးပြုခြင်း',
+              'ဘာသာစကားများစွာ ပံ့ပိုးမှု',
+            ] : [
               'Unlimited AI conversations',
               'Advanced image analysis',
               'Priority response time',
               'Health report exports',
               'Ad-free experience',
               'Multi-language support',
-            ].map((feature, index) => (
+            ]).map((feature, index) => (
               <View key={index} style={styles.featureRow}>
                 <Ionicons name="checkmark-circle" size={20} color={colors.teal} />
                 <Text style={styles.featureText}>{feature}</Text>
@@ -139,23 +148,22 @@ export default function SubscriptionScreen({ navigation }: any) {
             ))}
           </View>
 
-          {/* CTA */}
           <GradientButton
-            title="Get Full Access"
+            title={language === 'my' ? 'အပြည့်အဝင် ရယူပါ' : 'Get Full Access'}
             onPress={() => {}}
             size="large"
             style={styles.ctaBtn}
           />
 
           <Text style={styles.termsText}>
-            Auto-renewable. Cancel anytime.{'\n'}
-            <Text style={styles.termsLink}>Terms of Service</Text>
+            {language === 'my' ? 'အလိုအလျာက် အသစ်ပြုနိုင်ပါသည်။' : 'Auto-renewable. Cancel anytime.'}{'\n'}
+            <Text style={styles.termsLink}>{language === 'my' ? 'ဝန်ဆောင်မှုစည်းကမ်း' : 'Terms of Service'}</Text>
             {' • '}
-            <Text style={styles.termsLink}>Privacy Policy</Text>
+            <Text style={styles.termsLink}>{language === 'my' ? 'ကိုယ်ရေးအချက်အလက် မူဝါဒ' : 'Privacy Policy'}</Text>
           </Text>
 
           <TouchableOpacity style={styles.restoreBtn}>
-            <Text style={styles.restoreText}>Restore Purchases</Text>
+            <Text style={styles.restoreText}>{language === 'my' ? 'ဝယ်ယူမှုများ ပြန်ရယူပါ' : 'Restore Purchases'}</Text>
           </TouchableOpacity>
 
           <View style={{ height: spacing.huge }} />

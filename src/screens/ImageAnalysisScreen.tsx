@@ -12,6 +12,7 @@ import Card from '../components/Card';
 import GradientButton from '../components/GradientButton';
 import { colors, spacing, typography, borderRadius, shadows, gradients } from '../theme';
 import { analyzeImage } from '../services/ai';
+import { useAppStore } from '../store/useAppStore';
 
 const { width } = Dimensions.get('window');
 
@@ -22,6 +23,7 @@ export default function ImageAnalysisScreen({ navigation }: any) {
     insights: string[];
     disclaimer: string;
   } | null>(null);
+  const language = useAppStore(s => s.language);
 
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -82,14 +84,16 @@ export default function ImageAnalysisScreen({ navigation }: any) {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Image Analysis</Text>
+          <Text style={styles.headerTitle}>{language === 'my' ? 'ပုံခွဲခြမ်းစိတ်ဖြာ' : 'Image Analysis'}</Text>
           <TouchableOpacity>
             <Ionicons name="settings-outline" size={22} color={colors.text} />
           </TouchableOpacity>
         </View>
 
         <Text style={styles.description}>
-          Upload medical images for instant AI-powered analysis. Get comprehensive insights from X-rays, MRIs, CT scans, and more.
+          {language === 'my'
+            ? 'AI ခွဲခြမ်းစိတ်ဖြာရန် ဆေးဘက်ဆိုင်ရာ ပုံများ တင်ပါ။ X-rayများနှင့် အခြားပုံများအတွက် အသေးစိတ် ရလဒ်များ ရယူပါ။'
+            : 'Upload medical images for instant AI-powered analysis. Get comprehensive insights from X-rays, MRIs, CT scans, and more.'}
         </Text>
 
         {/* Upload Card */}
@@ -102,8 +106,8 @@ export default function ImageAnalysisScreen({ navigation }: any) {
                 <View style={styles.uploadIconCircle}>
                   <Ionicons name="cloud-download-outline" size={36} color={colors.teal} />
                 </View>
-                <Text style={styles.uploadText}>Click to upload</Text>
-                <Text style={styles.uploadHint}>JPG, PNG up to 10MB</Text>
+                <Text style={styles.uploadText}>{language === 'my' ? 'ပုံတင်ရန် နှိပ်ပါ' : 'Click to upload'}</Text>
+                <Text style={styles.uploadHint}>JPG, PNG 10MB အထိ</Text>
               </View>
             )}
           </Card>
@@ -113,17 +117,19 @@ export default function ImageAnalysisScreen({ navigation }: any) {
         <View style={styles.actionRow}>
           <TouchableOpacity onPress={takePhoto} style={styles.cameraBtn}>
             <Ionicons name="camera" size={22} color={colors.teal} />
-            <Text style={styles.cameraText}>Camera</Text>
+            <Text style={styles.cameraText}>{language === 'my' ? 'ကင်မရာ' : 'Camera'}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={pickImage} style={styles.cameraBtn}>
             <Ionicons name="images" size={22} color={colors.teal} />
-            <Text style={styles.cameraText}>Gallery</Text>
+            <Text style={styles.cameraText}>{language === 'my' ? 'ပြခန်း' : 'Gallery'}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Analyze Button */}
         <GradientButton
-          title={isAnalyzing ? 'Analyzing...' : 'Analyze Image'}
+          title={isAnalyzing
+            ? (language === 'my' ? 'ခွဲခြမ်းနေသည်...' : 'Analyzing...')
+            : (language === 'my' ? 'ပုံ ခွဲခြမ်းပါ' : 'Analyze Image')}
           onPress={handleAnalyze}
           size="large"
           style={styles.analyzeBtn}
@@ -133,14 +139,14 @@ export default function ImageAnalysisScreen({ navigation }: any) {
         {isAnalyzing && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.teal} />
-            <Text style={styles.loadingText}>AI is analyzing your image...</Text>
+            <Text style={styles.loadingText}>{language === 'my' ? 'AI က သင့်ပုံကို ခွဲခြမ်းနေပါသည်...' : 'AI is analyzing your image...'}</Text>
           </View>
         )}
 
         {/* Results */}
         {results && (
           <View style={styles.resultsSection}>
-            <Text style={styles.resultsTitle}>Analysis Results</Text>
+            <Text style={styles.resultsTitle}>{language === 'my' ? 'ခွဲခြမ်းစိတ်ဖြာ ရလဒ်များ' : 'Analysis Results'}</Text>
 
             <Card style={styles.resultsCard}>
               {results.insights.map((insight, index) => (
@@ -158,7 +164,7 @@ export default function ImageAnalysisScreen({ navigation }: any) {
             <Card style={styles.disclaimerCard}>
               <View style={styles.disclaimerRow}>
                 <Ionicons name="warning" size={18} color={colors.warning} />
-                <Text style={styles.disclaimerTitle}>Disclaimer</Text>
+                <Text style={styles.disclaimerTitle}>{language === 'my' ? 'သတိပေးချက်' : 'Disclaimer'}</Text>
               </View>
               <Text style={styles.disclaimerText}>{results.disclaimer}</Text>
             </Card>

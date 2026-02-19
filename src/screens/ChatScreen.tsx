@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput,
   TouchableOpacity, KeyboardAvoidingView, Platform,
-  Animated, Dimensions, Alert,
+  Animated, Dimensions, Alert, Keyboard, TouchableWithoutFeedback,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -113,6 +113,7 @@ function MessageBubble({ message, onSpeak, isSpeaking }: MessageBubbleProps) {
 
 export default function ChatScreen() {
   const [inputText, setInputText] = useState('');
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const navigation = useNavigation<NavigationProp>();
   const [currentTriageIndex, setCurrentTriageIndex] = useState(0);
@@ -120,7 +121,7 @@ export default function ChatScreen() {
   const {
     messages, disclaimerShown, isTyping,
     addMessage, setTyping, showDisclaimer,
-    isOffline,
+    isOffline, language,
     currentTriageCategory, triageResponses,
     addTriageResponse, setTriageCategory, clearTriage,
     setEmergencyMode,
@@ -128,6 +129,18 @@ export default function ChatScreen() {
 
   const { isRecording, isSpeaking, startRecording, stopRecording, speakText, stopSpeaking } = useVoiceInput();
   useNetworkStatus();
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false)
+    );
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
 
   const triageQuestions = currentTriageCategory
     ? getTriageQuestions(currentTriageCategory)
@@ -288,11 +301,12 @@ export default function ChatScreen() {
         onAccept={handleAcceptDisclaimer}
       />
 
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={90}
-      >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <KeyboardAvoidingView
+          style={styles.container}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={90}
+        >
         {/* Header */}
         <LinearGradient
           colors={[...gradients.header]}
@@ -303,9 +317,15 @@ export default function ChatScreen() {
               <Ionicons name="medical" size={22} color={colors.white} />
             </View>
             <View>
-              <Text style={styles.headerTitle}>AI Health Navigator</Text>
+              <Text style={styles.headerTitle}>
+                {language === 'my' ? 'AI ကျန်းမာရေး လမ်းညွှန်' : 'AI Health Navigator'}
+              </Text>
               <Text style={styles.headerStatus}>
-                {isTyping ? 'Typing...' : isOffline ? 'Offline' : 'Online'}
+                {isTyping
+                  ? (language === 'my' ? 'ရိုက်နေသည်...' : 'Typing...')
+                  : isOffline
+                    ? (language === 'my' ? 'အော့ဖ်လိုင်း' : 'Offline')
+                    : (language === 'my' ? 'အွန်လိုင်း' : 'Online')}
               </Text>
             </View>
           </View>
@@ -332,6 +352,8 @@ export default function ChatScreen() {
             />
           )}
           contentContainerStyle={styles.messagesList}
+          keyboardDismissMode="interactive"
+          keyboardShouldPersistTaps="handled"
           onContentSizeChange={() =>
             flatListRef.current?.scrollToEnd({ animated: true })
           }
@@ -341,8 +363,9 @@ export default function ChatScreen() {
                 <View style={styles.emptyIcon}>
                   <Ionicons name="chatbubbles" size={48} color={colors.tealLight} />
                 </View>
-                <Text style={styles.emptyTitle}>ဘာကူညီပေးရမလဲ?</Text>
-                <Text style={styles.emptySubtitle}>What can I help with?</Text>
+                <Text style={styles.emptyTitle}>
+                  {language === 'my' ? 'ဘာကူညီပေးရမလဲ?' : 'What can I help with?'}
+                </Text>
               </View>
             ) : null
           }
@@ -368,7 +391,9 @@ export default function ChatScreen() {
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
-              placeholder={isOffline ? 'Offline — AI chat unavailable' : 'Message'}
+              placeholder={isOffline
+                ? (language === 'my' ? 'အော့ဖ်လိုင်း — AI ချတ် မရနိုင်ပါ' : 'Offline — AI chat unavailable')
+                : (language === 'my' ? 'မက်ဆေ့ချ်' : 'Message')}
               placeholderTextColor={colors.textLight}
               value={inputText}
               onChangeText={setInputText}
@@ -402,7 +427,10 @@ export default function ChatScreen() {
             </LinearGradient>
           </TouchableOpacity>
         </View>
+        {/* Spacer for floating tab bar — hidden when keyboard is open */}
+        {!keyboardVisible && <View style={styles.tabBarSpacer} />}
       </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
     </GradientBackground>
   );
 }
@@ -559,10 +587,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    paddingBottom: Platform.OS === 'ios' ? 100 : 85,
     backgroundColor: colors.white,
     borderTopWidth: 1,
     borderTopColor: colors.border,
+  },
+  tabBarSpacer: {
+    height: Platform.OS === 'ios' ? 85 : 70,
+    backgroundColor: colors.white,
   },
   attachBtn: {
     width: 36,

@@ -58,7 +58,7 @@ export default function ProfileScreen({ navigation }: any) {
           <TouchableOpacity style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>My Profile</Text>
+          <Text style={styles.headerTitle}>{language === 'my' ? 'ကိုယ်ရေးအချက်အလက်' : 'My Profile'}</Text>
           <TouchableOpacity>
             <Ionicons name="settings-outline" size={22} color={colors.text} />
           </TouchableOpacity>
@@ -76,7 +76,7 @@ export default function ProfileScreen({ navigation }: any) {
             </View>
           </View>
           <GradientButton
-            title="Edit Profile"
+            title={language === 'my' ? 'ပြင်ဆင်ရန်' : 'Edit Profile'}
             onPress={() => {}}
             size="small"
             gradient={[...gradients.teal]}
@@ -88,21 +88,21 @@ export default function ProfileScreen({ navigation }: any) {
         <Card style={styles.menuCard}>
           <MenuItem
             icon="person"
-            label="Profile details"
+            label={language === 'my' ? 'ကိုယ်ရေးအသေးစိတ်' : 'Profile details'}
             iconColor={colors.teal}
             onPress={() => {}}
           />
           <View style={styles.menuDivider} />
           <MenuItem
             icon="lock-closed"
-            label="Passwords"
+            label={language === 'my' ? 'စကားဝှက်' : 'Passwords'}
             iconColor={colors.accentGradientStart}
             onPress={() => {}}
           />
           <View style={styles.menuDivider} />
           <MenuItem
             icon="globe"
-            label="Language"
+            label={language === 'my' ? 'ဘာသာစကား' : 'Language'}
             iconColor={colors.teal}
             onPress={() => setLanguage(language === 'en' ? 'my' : 'en')}
             rightElement={
@@ -117,7 +117,7 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={styles.menuDivider} />
           <MenuItem
             icon="diamond"
-            label="Subscription"
+            label={language === 'my' ? 'အခြေအနေ' : 'Subscription'}
             iconColor="#FDCB6E"
             onPress={() => navigation.navigate('Subscription')}
           />
@@ -126,21 +126,21 @@ export default function ProfileScreen({ navigation }: any) {
         <Card style={styles.menuCard}>
           <MenuItem
             icon="information-circle"
-            label="About"
+            label={language === 'my' ? 'အကြောင်း' : 'About'}
             iconColor={colors.info}
             onPress={() => {}}
           />
           <View style={styles.menuDivider} />
           <MenuItem
             icon="help-circle"
-            label="Help / FAQ"
+            label={language === 'my' ? 'အကူအညီ' : 'Help / FAQ'}
             iconColor={colors.success}
             onPress={() => {}}
           />
           <View style={styles.menuDivider} />
           <MenuItem
             icon="log-out"
-            label="Log out"
+            label={language === 'my' ? 'ထွက်ရန်' : 'Log out'}
             iconColor={colors.error}
             onPress={handleLogout}
           />

@@ -142,6 +142,15 @@ export default function ChatScreen() {
     return () => { showSub.remove(); hideSub.remove(); };
   }, []);
 
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages.length, isTyping]);
+
   const triageQuestions = currentTriageCategory
     ? getTriageQuestions(currentTriageCategory)
     : [];
@@ -301,12 +310,7 @@ export default function ChatScreen() {
         onAccept={handleAcceptDisclaimer}
       />
 
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <KeyboardAvoidingView
-          style={styles.container}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={90}
-        >
+      <View style={styles.container}>
         {/* Header */}
         <LinearGradient
           colors={[...gradients.header]}
@@ -352,11 +356,22 @@ export default function ChatScreen() {
             />
           )}
           contentContainerStyle={styles.messagesList}
+          style={styles.messagesContainer}
           keyboardDismissMode="interactive"
           keyboardShouldPersistTaps="handled"
-          onContentSizeChange={() =>
-            flatListRef.current?.scrollToEnd({ animated: true })
-          }
+          showsVerticalScrollIndicator={true}
+          onContentSizeChange={() => {
+            setTimeout(() => {
+              flatListRef.current?.scrollToEnd({ animated: true });
+            }, 100);
+          }}
+          onLayout={() => {
+            if (messages.length > 0) {
+              setTimeout(() => {
+                flatListRef.current?.scrollToEnd({ animated: false });
+              }, 100);
+            }
+          }}
           ListEmptyComponent={
             disclaimerShown ? (
               <View style={styles.emptyContainer}>
@@ -384,59 +399,70 @@ export default function ChatScreen() {
         )}
 
         {/* Input */}
-        <View style={styles.inputBar}>
-          <TouchableOpacity style={styles.attachBtn}>
-            <Ionicons name="add" size={24} color={colors.teal} />
-          </TouchableOpacity>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder={isOffline
-                ? (language === 'my' ? 'အော့ဖ်လိုင်း — AI ချတ် မရနိုင်ပါ' : 'Offline — AI chat unavailable')
-                : (language === 'my' ? 'မက်ဆေ့ချ်' : 'Message')}
-              placeholderTextColor={colors.textLight}
-              value={inputText}
-              onChangeText={setInputText}
-              multiline
-              maxLength={2000}
-              editable={!currentTriageCategory}
-            />
-            <TouchableOpacity
-              onPress={handleMicPress}
-              style={[styles.micBtn, isRecording && styles.micBtnActive]}
-            >
-              <Ionicons
-                name={isRecording ? 'stop-circle' : 'mic-outline'}
-                size={20}
-                color={isRecording ? colors.teal : colors.textLight}
-              />
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity
-            onPress={() => handleSend()}
-            activeOpacity={0.8}
-            disabled={!!currentTriageCategory}
-          >
-            <LinearGradient
-              colors={[...gradients.send]}
-              style={[styles.sendBtn, currentTriageCategory && styles.sendBtnDisabled]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
-              <Ionicons name="send" size={18} color={colors.white} />
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <View style={styles.inputBar}>
+              <TouchableOpacity style={styles.attachBtn} activeOpacity={0.7}>
+                <Ionicons name="add" size={24} color={colors.teal} />
+              </TouchableOpacity>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder={isOffline
+                    ? (language === 'my' ? 'အော့ဖ်လိုင်း — AI ချတ် မရနိုင်ပါ' : 'Offline — AI chat unavailable')
+                    : (language === 'my' ? 'မက်ဆေ့ချ်' : 'Message')}
+                  placeholderTextColor={colors.textLight}
+                  value={inputText}
+                  onChangeText={setInputText}
+                  multiline
+                  maxLength={2000}
+                  editable={!currentTriageCategory}
+                  returnKeyType="send"
+                  blurOnSubmit={false}
+                />
+                <TouchableOpacity
+                  onPress={handleMicPress}
+                  style={[styles.micBtn, isRecording && styles.micBtnActive]}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name={isRecording ? 'stop-circle' : 'mic-outline'}
+                    size={20}
+                    color={isRecording ? colors.teal : colors.textLight}
+                  />
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                onPress={() => handleSend()}
+                activeOpacity={0.8}
+                disabled={!!currentTriageCategory || !inputText.trim()}
+              >
+                <LinearGradient
+                  colors={[...gradients.send]}
+                  style={[styles.sendBtn, (currentTriageCategory || !inputText.trim()) && styles.sendBtnDisabled]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Ionicons name="send" size={18} color={colors.white} />
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
         {/* Spacer for floating tab bar — hidden when keyboard is open */}
         {!keyboardVisible && <View style={styles.tabBarSpacer} />}
-      </KeyboardAvoidingView>
-    </TouchableWithoutFeedback>
+      </View>
     </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { 
+    flex: 1,
+  },
 
   // Header
   header: {
@@ -479,6 +505,9 @@ const styles = StyleSheet.create({
   },
 
   // Messages
+  messagesContainer: {
+    flex: 1,
+  },
   messagesList: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
@@ -584,60 +613,79 @@ const styles = StyleSheet.create({
   // Input bar
   inputBar: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingBottom: Platform.OS === 'ios' ? spacing.md : spacing.sm,
     backgroundColor: colors.white,
-    borderTopWidth: 1,
+    borderTopWidth: 0.5,
     borderTopColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 5,
   },
   tabBarSpacer: {
-    height: Platform.OS === 'ios' ? 85 : 70,
+    // Extra space so the input bar sits fully above the floating tab bar
+    height: Platform.OS === 'ios' ? 120 : 90,
     backgroundColor: colors.white,
   },
   attachBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#E8F8F8',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.sm,
+    marginRight: spacing.xs,
   },
   inputContainer: {
     flex: 1,
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    backgroundColor: '#F8FAFA',
-    borderRadius: borderRadius.xl,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: Platform.OS === 'ios' ? spacing.md : spacing.xs,
-    marginRight: spacing.sm,
-    minHeight: 40,
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: Platform.OS === 'ios' ? spacing.sm : spacing.xs,
+    marginRight: spacing.xs,
+    minHeight: 44,
+    maxHeight: 100,
   },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
     color: colors.text,
-    maxHeight: 100,
+    paddingVertical: Platform.OS === 'ios' ? spacing.xs : 0,
+    paddingHorizontal: 0,
+    maxHeight: 80,
+    textAlignVertical: 'center',
   },
   micBtn: {
-    marginLeft: spacing.sm,
-    paddingBottom: 2,
-    padding: 4,
-  },
-  micBtnActive: {
-    backgroundColor: colors.tealLight + '40',
-    borderRadius: 12,
-  },
-  sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    marginLeft: spacing.xs,
+    padding: spacing.xs,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  micBtnActive: {
+    backgroundColor: colors.tealLight + '30',
+    borderRadius: 16,
+  },
+  sendBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.teal,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   sendBtnDisabled: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
 });

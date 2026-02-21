@@ -4,7 +4,7 @@ export type Language = 'en' | 'my';
 
 const translations = {
     // Tab Bar
-    'tab.home': { en: 'Homes', my: 'ပင်မ' },
+    'tab.home': { en: 'Home', my: 'ပင်မ' },
     'tab.visits': { en: 'Visits', my: 'မှတ်တမ်း' },
     'tab.companion': { en: 'Companion', my: 'အဖော်' },
     'tab.analysis': { en: 'Analysis', my: 'စကန်' },

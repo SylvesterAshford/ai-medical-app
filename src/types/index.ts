@@ -17,6 +17,7 @@ export interface ChatMessage {
   timestamp: Date;
   isTyping?: boolean;
   triageCategory?: string;
+  hospitals?: Hospital[];
 }
 
 export interface HealthTopic {

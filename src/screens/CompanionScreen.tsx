@@ -14,6 +14,7 @@ import GradientBackground from '../components/GradientBackground';
 import DisclaimerModal from '../components/DisclaimerModal';
 import TriageQuestionCard from '../components/TriageQuestionCard';
 import OfflineBanner from '../components/OfflineBanner';
+import HospitalCard from '../components/HospitalCard';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { colors, spacing, typography, borderRadius, gradients, shadows } from '../theme';
@@ -73,27 +74,37 @@ function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.sender === 'user';
 
   return (
-    <View style={[styles.bubbleRow, isUser && styles.bubbleRowUser]}>
-      {!isUser && (
-        <View style={styles.aiAvatar}>
-          <Ionicons name="medical" size={16} color={colors.teal} />
-        </View>
-      )}
-      <View
-        style={[
-          styles.bubble,
-          isUser ? styles.userBubble : styles.aiBubble,
-        ]}
-      >
-        <Text style={[styles.bubbleText, isUser && styles.userBubbleText]}>
-          {message.text}
-        </Text>
-        <View style={styles.bubbleFooter}>
-          <Text style={[styles.timestamp, isUser && styles.userTimestamp]}>
-            {formatTimestamp(message.timestamp)}
+    <View style={styles.messageWrapper}>
+      <View style={[styles.bubbleRow, isUser && styles.bubbleRowUser]}>
+        {!isUser && (
+          <View style={styles.aiAvatar}>
+            <Ionicons name="medical" size={16} color={colors.teal} />
+          </View>
+        )}
+        <View
+          style={[
+            styles.bubble,
+            isUser ? styles.userBubble : styles.aiBubble,
+          ]}
+        >
+          <Text style={[styles.bubbleText, isUser && styles.userBubbleText]}>
+            {message.text}
           </Text>
+          <View style={styles.bubbleFooter}>
+            <Text style={[styles.timestamp, isUser && styles.userTimestamp]}>
+              {formatTimestamp(message.timestamp)}
+            </Text>
+          </View>
         </View>
       </View>
+      
+      {!isUser && message.hospitals && message.hospitals.length > 0 && (
+        <View style={styles.inlineHospitals}>
+          {message.hospitals.map(hospital => (
+            <HospitalCard key={hospital.id} hospital={hospital} />
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -196,7 +207,7 @@ export default function ChatScreen() {
     setTyping(true);
     try {
       const response = await sendChatMessage(messages, userText);
-      addMessage(response, 'ai');
+      addMessage(response.text, 'ai', undefined, response.hospitals);
     } catch {
       addMessage('Sorry, something went wrong. Please try again.', 'ai');
     } finally {
@@ -557,9 +568,11 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     flexGrow: 1,
   },
+  messageWrapper: {
+    marginBottom: spacing.md,
+  },
   bubbleRow: {
     flexDirection: 'row',
-    marginBottom: spacing.md,
     alignItems: 'flex-end',
   },
   bubbleRowUser: {
@@ -614,6 +627,10 @@ const styles = StyleSheet.create({
   speakerBtn: {
     padding: 4,
     marginLeft: spacing.sm,
+  },
+  inlineHospitals: {
+    paddingLeft: 36, // avatar width (28) + margin (8)
+    paddingTop: spacing.xs,
   },
 
   // Typing

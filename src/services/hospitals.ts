@@ -53,18 +53,47 @@ export async function fetchHospitals(): Promise<Hospital[]> {
 export async function getNearbyHospitals(
     userLat: number,
     userLon: number,
-    radiusKm: number = 10
+    radiusKm: number = 50
 ): Promise<Hospital[]> {
     const hospitals = await fetchHospitals();
 
     const withDistance = hospitals.map(hospital => ({
         ...hospital,
         distance: calculateDistance(userLat, userLon, hospital.latitude, hospital.longitude),
-    }));
+    })).sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
 
-    return withDistance
-        .filter(h => h.distance <= radiusKm)
-        .sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
+    const withinRadius = withDistance.filter(h => (h.distance ?? 0) <= radiusKm);
+
+    // If no hospitals within radius, return the 5 closest ones regardless of distance
+    return withinRadius.length > 0 ? withinRadius : withDistance.slice(0, 5);
+}
+
+export async function searchHospitalsByLocation(
+    locationQuery: string,
+    userLat?: number,
+    userLon?: number
+): Promise<Hospital[]> {
+    const { data, error } = await supabase
+        .from('hospitals')
+        .select('*')
+        .or(`city.ilike.%${locationQuery}%,name.ilike.%${locationQuery}%`)
+        .order('name');
+
+    if (error) {
+        console.error('Failed to search hospitals by location:', error);
+        return [];
+    }
+
+    let results = (data || []) as Hospital[];
+
+    if (userLat !== undefined && userLon !== undefined) {
+        results = results.map(hospital => ({
+            ...hospital,
+            distance: calculateDistance(userLat, userLon, hospital.latitude, hospital.longitude),
+        })).sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
+    }
+
+    return results;
 }
 
 // ─── AsyncStorage Caching ──────────────────────────────────────────────
@@ -120,10 +149,10 @@ export async function getHospitalsWithFallback(
                 distance: calculateDistance(userLat, userLon, hospital.latitude, hospital.longitude),
             }));
 
+            const filtered = withDistance.filter(h => (h.distance ?? 0) <= radiusKm);
+
             return {
-                hospitals: withDistance
-                    .filter(h => (h.distance ?? 0) <= radiusKm)
-                    .sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0)),
+                hospitals: filtered.length > 0 ? filtered : withDistance.slice(0, 5),
                 fromCache: true,
             };
         }

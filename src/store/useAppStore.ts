@@ -17,7 +17,7 @@ interface AppState {
     messages: ChatMessage[];
     disclaimerShown: boolean;
     isTyping: boolean;
-    addMessage: (text: string, sender: 'user' | 'ai', triageCategory?: string) => void;
+    addMessage: (text: string, sender: 'user' | 'ai', triageCategory?: string, hospitals?: Hospital[]) => void;
     setTyping: (typing: boolean) => void;
     showDisclaimer: () => void;
     clearMessages: () => void;
@@ -91,7 +91,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     disclaimerShown: false,
     isTyping: false,
 
-    addMessage: (text: string, sender: 'user' | 'ai', triageCategory?: string) => set(state => ({
+    addMessage: (text: string, sender: 'user' | 'ai', triageCategory?: string, hospitals?: Hospital[]) => set(state => ({
         messages: [
             ...state.messages,
             {
@@ -100,6 +100,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                 sender,
                 timestamp: new Date(),
                 triageCategory,
+                hospitals,
             },
         ],
     })),

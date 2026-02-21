@@ -93,10 +93,9 @@ const SYMPTOM_KEYWORDS: { keywords: string[]; category: SymptomCategory }[] = [
 // ─── Hospital Search Detection ─────────────────────────────────────────
 
 const HOSPITAL_SEARCH_KEYWORDS = [
-    'အနီးဆုံး ဆေးရုံ', 'အနီးဆုံးဆေးရုံ', 'ဆေးရုံ ရှာ', 'ဆေးရုံရှာ',
-    'ဆေးခန်း ရှာ', 'ဆေးခန်းရှာ', 'hospital', 'find hospital',
-    'nearest hospital', 'nearby hospital', 'clinic', 'find clinic',
-    'nearest clinic', 'ဆေးရုံ', 'ဆေးခန်း',
+    'အနားက ဆေးရုံ', 'အနီးဆုံး ဆေးရုံ', 'အနီးဆုံးဆေးရုံ',
+    'hospital near me', 'nearest hospital', 'closest hospital',
+    'find hospital near me', 'hospitals around me', 'nearest to me', 'closest to me'
 ];
 
 // ─── Blocked Content Patterns ──────────────────────────────────────────

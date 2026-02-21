@@ -1,6 +1,7 @@
 // AI Service — Gemini via Supabase Edge Function proxy (bypasses geo-restrictions)
 
-import { ChatMessage, HealthProfile, MedicalRecord } from '../types';
+import { ChatMessage, HealthProfile, MedicalRecord, Hospital } from '../types';
+import { searchHospitalsByLocation } from './hospitals';
 import { detectEmergency } from '../utils';
 import {
     shouldTriggerEmergency,
@@ -10,6 +11,7 @@ import {
     getDisclaimer,
 } from '../utils/triageRules';
 import { useAppStore } from '../store/useAppStore';
+import * as Location from 'expo-location';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -17,7 +19,7 @@ const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 // Edge function endpoint
 const GEMINI_PROXY_URL = `${SUPABASE_URL}/functions/v1/gemini-proxy`;
 
-function getSystemPrompt(lang: 'en' | 'my', profile?: HealthProfile | null, records?: MedicalRecord[]): string {
+function getSystemPrompt(lang: 'en' | 'my', profile?: HealthProfile | null, records?: MedicalRecord[], userCity?: string): string {
     const profileText = profile ? `
 Patient Profile:
 - Chronic Conditions: ${profile.chronicConditions.join(', ') || 'None'}
@@ -30,7 +32,9 @@ Recent Medical Records:
 ${records.slice(0, 3).map(r => `- [${r.type}] ${r.createdAt}: ${r.summary}`).join('\n')}
 ` : '';
 
-    const context = (profileText || recordsText) ? `\n--- PATIENT CONTEXT ---${profileText}${recordsText}-----------------------\n` : '';
+    const locationText = userCity ? `\nUser's Current Location: ${userCity}` : '';
+
+    const context = (profileText || recordsText || locationText) ? `\n--- CONTEXT ---${profileText}${recordsText}${locationText}\n-----------------------\n` : '';
 
     if (lang === 'my') {
         return `သင်သည် မြန်မာနိုင်ငံအတွက် ကျန်းမာရေး AI လမ်းညွှန်ဖြစ်ပါသည်။ ကျန်းမာရေး သတင်းအချက်အလက်နှင့် လမ်းညွှန်ချက်များ ပေးပါ။
@@ -43,7 +47,8 @@ ${context}
 5. ကျန်းမာရေး ဝေါဟာရများကို အင်္ဂလိပ်လို ထုတ်ယူပြီး လူနာနားလည်လွယ်သော မြန်မာဘာသာဖြင့် ရှင်းပြပါ။
 6. မြန်မာဘာသာဖြင့်သာ ရိုးရှင်းစွာ ရေးပါ (အင်္ဂလိပ်ဘာသာ မရောပါနှင့်)။
 7. စာနာမှုရှိပြီး ကျွမ်းကျင်မှုရှိပါ။
-8. သိမ်းဆည်းထားသော လူနာ၏ မှတ်တမ်းများကို ထည့်သွင်းစဉ်းစားပါ။`;
+8. သိမ်းဆည်းထားသော လူနာ၏ မှတ်တမ်းများကို ထည့်သွင်းစဉ်းစားပါ။
+9. အကယ်၍ အသုံးပြုသူမှ ဆေးရုံများကို ရှာဖွေလိုပါက ${userCity ? 'ပေးထားသော လက်ရှိတည်နေရာကို အသုံးပြုပါ သို့မဟုတ် ' : ''}မြို့အမည်တိကျစွာဖြင့် ဤအတိုင်း အတိအကျ ပြန်စာရေးပါ- [SEARCH_HOSPITAL: CityName] (ဥပမာ- [SEARCH_HOSPITAL: Mandalay]). မြို့အမည် မရရှိပါက အသုံးပြုသူ၏ တည်နေရာကို မေးမြန်းပါ။ 'LocationName' ဟူသော စကားလုံးကို တိုက်ရိုက် မသုံးပါနှင့်။`;
     }
 
     return `You are a health AI navigator for Myanmar. You provide health information and guidance.
@@ -56,7 +61,8 @@ IMPORTANT RULES:
 5. Extract medical terms in English but explain them using Patient-First language.
 6. Be empathetic, clear, and professional.
 7. Respond ONLY in English.
-8. Consider the patient's provided health profile and recent records in your responses.`;
+8. Consider the patient's provided health profile and recent records in your responses.
+9. If the user asks to find hospitals, you MUST output exactly this tag in your response using a specific city name: [SEARCH_HOSPITAL: CityName] (e.g., [SEARCH_HOSPITAL: Mandalay]). ${userCity ? 'Use the provided Current Location if no specific city is requested.' : 'If you do not know their city, politely ask for their location first.'} NEVER output the literal string 'LocationName'.`;
 }
 
 // Pre-check result type
@@ -84,7 +90,7 @@ export function runPreChecks(userMessage: string): AIPreCheckResult {
 export async function sendChatMessage(
     messages: ChatMessage[],
     userMessage: string
-): Promise<string> {
+): Promise<{ text: string; hospitals?: Hospital[] }> {
     const state = useAppStore.getState();
     const lang = state.language || 'en';
     const profile = state.healthProfile;
@@ -94,17 +100,39 @@ export async function sendChatMessage(
     // Check for emergency keywords
     if (detectEmergency(userMessage)) {
         if (lang === 'my') {
-            return 'အရေးပေါ် အခြေအနေ ဖြစ်နိုင်ပါသည်။ ကျေးဇူးပြု၍ 192 သို့ ချက်ချင်းဖုန်းခေါ်ပါ သို့မဟုတ် အနီးဆုံးဆေးရုံသို့ သွားပါ။' + disclaimer;
+            return { text: 'အရေးပေါ် အခြေအနေ ဖြစ်နိုင်ပါသည်။ ကျေးဇူးပြု၍ 192 သို့ ချက်ချင်းဖုန်းခေါ်ပါ သို့မဟုတ် အနီးဆုံးဆေးရုံသို့ သွားပါ။' + disclaimer };
         }
-        return 'This may be an emergency. Please call 192 immediately or go to the nearest hospital.' + disclaimer;
+        return { text: 'This may be an emergency. Please call 192 immediately or go to the nearest hospital.' + disclaimer };
     }
 
     // If no Supabase URL, return a demo response
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-        return getDemoResponse(userMessage, lang) + disclaimer;
+        return { text: getDemoResponse(userMessage, lang) + disclaimer };
     }
 
     try {
+        // Try to get user's city context before sending to AI
+        let userCity: string | undefined;
+        let aiUserLat: number | undefined;
+        let aiUserLon: number | undefined;
+
+        try {
+            const { status } = await Location.getForegroundPermissionsAsync();
+            if (status === 'granted') {
+                const pos = await Location.getLastKnownPositionAsync({}) || await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+                if (pos) {
+                    aiUserLat = pos.coords.latitude;
+                    aiUserLon = pos.coords.longitude;
+                    const geocode = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+                    if (geocode && geocode.length > 0) {
+                        userCity = geocode[0].city || geocode[0].region || undefined;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Could not get pre-flight location info', e);
+        }
+
         // Build conversation history
         const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
 
@@ -132,7 +160,7 @@ export async function sendChatMessage(
             body: JSON.stringify({
                 contents,
                 systemInstruction: {
-                    parts: [{ text: getSystemPrompt(lang, profile, records) }],
+                    parts: [{ text: getSystemPrompt(lang, profile, records, userCity) }],
                 },
                 generationConfig: {
                     temperature: 0.7,
@@ -182,13 +210,36 @@ export async function sendChatMessage(
         // Light sanitization — only catches explicit prescription dosages
         aiResponse = sanitizeAIResponse(aiResponse);
 
-        return aiResponse + disclaimer;
+        // Check for SEARCH_HOSPITAL tag
+        let hospitals: Hospital[] | undefined;
+        const searchMatch = aiResponse.match(/\[SEARCH_HOSPITAL:\s*(.+?)\]/i);
+        if (searchMatch) {
+            const location = searchMatch[1].trim();
+
+            hospitals = await searchHospitalsByLocation(location, aiUserLat, aiUserLon);
+
+            // Replace the tag with a friendly message
+            let friendlyMsg = '';
+            if (hospitals && hospitals.length > 0) {
+                friendlyMsg = lang === 'my'
+                    ? `${location} အနီးရှိ ဆေးရုံများကို ရှာဖွေပေးထားပါသည်-`
+                    : `Here are the hospitals I found near ${location}:`;
+            } else {
+                friendlyMsg = lang === 'my'
+                    ? `${location} အနီးတွင် ဆေးရုံရှာမတွေ့ပါ။ ဒေတာဘေ့စ်တွင် အချက်အလက်မရှိသေးပါ။`
+                    : `I couldn't find any hospitals near ${location} in our current database.`;
+            }
+
+            aiResponse = aiResponse.replace(/\[SEARCH_HOSPITAL:\s*(.+?)\]/i, friendlyMsg);
+        }
+
+        return { text: aiResponse + disclaimer, hospitals };
     } catch (error) {
         console.error('AI proxy error:', error);
         const errorMsg = lang === 'my'
             ? 'တောင်းပန်ပါသည်။ အမှားတစ်ခု ဖြစ်ပေါ်ခဲ့ပါသည်။ ချိတ်ဆက်မှု စစ်ဆေးပြီး ထပ်ကြိုးစားပါ။'
             : 'I apologize, there was an error processing your request. Please check your connection and try again.';
-        return errorMsg + disclaimer;
+        return { text: errorMsg + disclaimer };
     }
 }
 

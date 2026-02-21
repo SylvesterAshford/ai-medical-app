@@ -127,7 +127,7 @@ export default function HospitalFinderScreen() {
       {/* Results count */}
       {!loading && hospitals.length > 0 && (
         <Text style={styles.resultCount}>
-          {hospitals.length} hospital{hospitals.length === 1 ? '' : 's'} found within 10km
+          {hospitals.length} hospital{hospitals.length === 1 ? '' : 's'} found
         </Text>
       )}
     </View>
@@ -152,10 +152,10 @@ export default function HospitalFinderScreen() {
       <View style={styles.emptyState}>
         <Ionicons name="medical" size={48} color={colors.textLight} />
         <Text style={styles.emptyTitle}>
-          အနီးအနား ဆေးရုံ မတွေ့ပါ
+          ဆေးရုံ မတွေ့ပါ
         </Text>
         <Text style={styles.emptySubtitle}>
-          No hospitals found within 10km
+          No hospitals found in the database.
         </Text>
       </View>
     );

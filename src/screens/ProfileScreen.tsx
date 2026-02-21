@@ -197,13 +197,15 @@ const styles = StyleSheet.create({
   },
   profileInfo: {
     flex: 1,
+    justifyContent: 'center',
   },
   profileName: {
     ...typography.h3,
-    marginBottom: 2,
+    paddingTop: 0,
   },
   profileEmail: {
     ...typography.bodySmall,
+    paddingTop: 0,
   },
   editBtn: {
     alignSelf: 'center',

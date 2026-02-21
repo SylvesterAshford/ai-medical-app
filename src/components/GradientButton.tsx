@@ -58,8 +58,11 @@ const styles = StyleSheet.create({
   text: {
     ...typography.button,
     color: colors.white,
-    paddingTop: Platform.OS === 'ios' ? 4 : 8,
-    paddingBottom: Platform.OS === 'ios' ? 4 : 6,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    paddingTop: Platform.OS === 'ios' ? 8 : 4,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 4,
   },
   disabled: {
     opacity: 0.5,

@@ -90,43 +90,59 @@ export const typography = {
     fontWeight: '700' as const,
     color: colors.text,
     letterSpacing: -0.5,
+    // Generous line height so tall scripts like Burmese aren't clipped
+    lineHeight: 44,
+    // Extra padding so tall glyphs like Burmese have breathing room
+    paddingTop: 8,
   },
   h2: {
     fontSize: 22,
     fontWeight: '600' as const,
     color: colors.text,
     letterSpacing: -0.3,
+    lineHeight: 36,
+    paddingTop: 8,
   },
   h3: {
     fontSize: 18,
     fontWeight: '600' as const,
     color: colors.text,
+    lineHeight: 30,
+    paddingTop: 6,
   },
   body: {
     fontSize: 15,
     fontWeight: '400' as const,
     color: colors.text,
-    lineHeight: 22,
+    lineHeight: 26,
+    paddingTop: 4,
   },
   bodySmall: {
     fontSize: 13,
     fontWeight: '400' as const,
     color: colors.textSecondary,
-    lineHeight: 18,
+    lineHeight: 22,
+    paddingTop: 4,
   },
   caption: {
     fontSize: 11,
     fontWeight: '400' as const,
     color: colors.textLight,
+    lineHeight: 18,
+    paddingTop: 4,
   },
   button: {
     fontSize: 16,
     fontWeight: '600' as const,
     color: colors.white,
+    lineHeight: 24,
+    paddingTop: 4,
   },
   tabLabel: {
     fontSize: 10,
     fontWeight: '500' as const,
+    lineHeight: 18,
+    paddingTop: 4,
   },
 };
 

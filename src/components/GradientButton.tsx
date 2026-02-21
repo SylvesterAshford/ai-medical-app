@@ -1,7 +1,7 @@
 // GradientButton — pill-shaped gradient button
 
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, gradients, borderRadius, shadows, typography } from '../theme';
 
@@ -58,6 +58,9 @@ const styles = StyleSheet.create({
   text: {
     ...typography.button,
     color: colors.white,
+    lineHeight: 24,
+    paddingTop: Platform.OS === 'ios' ? 4 : 8,
+    paddingBottom: Platform.OS === 'ios' ? 4 : 6,
   },
   disabled: {
     opacity: 0.5,

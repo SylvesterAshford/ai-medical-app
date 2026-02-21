@@ -3,7 +3,7 @@
 import React from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Dimensions,
+  Dimensions, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -129,7 +129,7 @@ export default function HomeScreen({ navigation }: any) {
                 icon="chatbubble-ellipses"
                 title={language === 'my' ? 'AI နှင့် စကားပြော' : 'Talk to AI assistant'}
                 subtitle={language === 'my' ? 'စမ်းကြည့်ရအောင်' : "Let's try it now"}
-                onPress={() => navigation.navigate('Chat')}
+                onPress={() => navigation.navigate('Companion')}
                 iconBg={colors.accentGradientStart}
                 hasButton
               />
@@ -140,7 +140,7 @@ export default function HomeScreen({ navigation }: any) {
                 icon="body"
                 title={language === 'my' ? 'BMI စစ်ဆေးရန်' : 'BMI Check'}
                 subtitle={language === 'my' ? 'ခန္ဓာကိုယ်ထုထည်ညွှန်း' : 'Calculate body mass index'}
-                onPress={() => navigation.navigate('HealthTools')}
+                onPress={() => navigation.navigate('Visits')}
                 iconBg={colors.teal}
                 hasArrow
               />
@@ -149,7 +149,7 @@ export default function HomeScreen({ navigation }: any) {
                 icon="image"
                 title={language === 'my' ? 'ပုံခွဲခြမ်းစိတ်ဖြာ' : 'Image Analysis'}
                 subtitle={language === 'my' ? 'ကျန်းမာရေးပုံများ ခွဲခြမ်း' : 'Analyze your health-related images'}
-                onPress={() => navigation.navigate('ImageAnalysis')}
+                onPress={() => navigation.navigate('Analysis')}
                 iconBg={colors.teal}
                 hasArrow
               />
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
-    paddingTop: 60,
+    paddingTop: 72,
     paddingHorizontal: spacing.xxl,
     paddingBottom: spacing.xxl,
     borderBottomLeftRadius: borderRadius.lg,
@@ -249,7 +249,6 @@ const styles = StyleSheet.create({
   greeting: {
     ...typography.h1,
     fontSize: 26,
-    lineHeight: 34,
   },
 
   // Feature cards
@@ -282,16 +281,21 @@ const styles = StyleSheet.create({
   featureTitle: {
     ...typography.h3,
     fontSize: 15,
+    lineHeight: 26,
+    paddingTop: 6,
     marginBottom: spacing.xs,
   },
   featureSubtitle: {
     ...typography.bodySmall,
     fontSize: 12,
+    lineHeight: 22,
+    paddingTop: 4,
     marginBottom: spacing.sm,
   },
   featureBtn: {
     alignSelf: 'flex-start',
     marginTop: spacing.xs,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
   },
   arrowRow: {
     alignSelf: 'flex-end',
@@ -327,11 +331,15 @@ const styles = StyleSheet.create({
   topicTitle: {
     ...typography.h3,
     fontSize: 14,
+    lineHeight: 24,
+    paddingTop: 6,
     marginBottom: spacing.xs,
   },
   topicDesc: {
     ...typography.bodySmall,
     fontSize: 12,
+    lineHeight: 20,
+    paddingTop: 4,
     marginBottom: spacing.md,
   },
   topicBtn: {

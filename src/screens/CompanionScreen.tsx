@@ -1,6 +1,6 @@
 // Chat Screen — WhatsApp-style with AI + Voice + Triage + Emergency
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput,
   TouchableOpacity, KeyboardAvoidingView, Platform,
@@ -14,11 +14,13 @@ import GradientBackground from '../components/GradientBackground';
 import DisclaimerModal from '../components/DisclaimerModal';
 import TriageQuestionCard from '../components/TriageQuestionCard';
 import OfflineBanner from '../components/OfflineBanner';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import { colors, spacing, typography, borderRadius, gradients, shadows } from '../theme';
 import { useAppStore } from '../store/useAppStore';
-import { sendChatMessage, runPreChecks } from '../services/ai';
-import { formatTimestamp } from '../utils';
-import { ChatMessage, RootStackParamList, TriageResponse, SymptomCategory } from '../types';
+import { sendChatMessage, runPreChecks, getVisitSummary } from '../services/ai';
+import { formatTimestamp, generateId } from '../utils';
+import { ChatMessage, RootStackParamList, TriageResponse, SymptomCategory, MedicalRecord } from '../types';
 import { getTriageQuestions, evaluateTriageResponses } from '../utils/triageRules';
 import { useVoiceInput } from '../hooks/useVoiceInput';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
@@ -65,11 +67,9 @@ function TypingIndicator() {
 
 interface MessageBubbleProps {
   message: ChatMessage;
-  onSpeak: (text: string) => void;
-  isSpeaking: boolean;
 }
 
-function MessageBubble({ message, onSpeak, isSpeaking }: MessageBubbleProps) {
+function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.sender === 'user';
 
   return (
@@ -92,19 +92,6 @@ function MessageBubble({ message, onSpeak, isSpeaking }: MessageBubbleProps) {
           <Text style={[styles.timestamp, isUser && styles.userTimestamp]}>
             {formatTimestamp(message.timestamp)}
           </Text>
-          {!isUser && (
-            <TouchableOpacity
-              onPress={() => onSpeak(message.text)}
-              style={styles.speakerBtn}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name={isSpeaking ? 'volume-high' : 'volume-medium-outline'}
-                size={16}
-                color={isSpeaking ? colors.teal : colors.textLight}
-              />
-            </TouchableOpacity>
-          )}
         </View>
       </View>
     </View>
@@ -124,10 +111,10 @@ export default function ChatScreen() {
     isOffline, language,
     currentTriageCategory, triageResponses,
     addTriageResponse, setTriageCategory, clearTriage,
-    setEmergencyMode,
+    setEmergencyMode, user, addMedicalRecord,
   } = useAppStore();
 
-  const { isRecording, isSpeaking, startRecording, stopRecording, speakText, stopSpeaking } = useVoiceInput();
+  const { isRecording, startRecording, stopRecording } = useVoiceInput();
   useNetworkStatus();
 
   useEffect(() => {
@@ -287,21 +274,73 @@ export default function ChatScreen() {
     }
   }, [isRecording, startRecording, stopRecording, addMessage]);
 
-  const handleSpeak = useCallback((text: string) => {
-    if (isSpeaking) {
-      stopSpeaking();
-    } else {
-      speakText(text, 'my');
+  const handleGenerateSummary = useCallback(async () => {
+    if (messages.length < 2) {
+      Alert.alert('Not enough messages', 'Please continue chatting to generate a meaningful summary.');
+      return;
     }
-  }, [isSpeaking, speakText, stopSpeaking]);
+    setTyping(true);
+    try {
+      const summaryText = await getVisitSummary(messages);
+
+      const htmlContent = `
+        <html>
+          <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+            <style>
+              body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6; }
+              h1 { color: #00796B; border-bottom: 2px solid #00796B; padding-bottom: 10px; }
+              pre { white-space: pre-wrap; font-family: inherit; font-size: 14px; }
+            </style>
+          </head>
+          <body>
+            <h1>Medical Visit Summary</h1>
+            <pre>${summaryText}</pre>
+          </body>
+        </html>
+      `;
+
+      const { uri } = await Print.printToFileAsync({ html: htmlContent });
+
+      // Save to global state history
+      const newRecord: MedicalRecord = {
+        id: generateId(),
+        userId: user?.id || 'guest',
+        type: 'Visit',
+        summary: summaryText,
+        createdAt: new Date().toISOString(),
+      };
+      addMedicalRecord(newRecord);
+
+      await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to generate and share summary.');
+    } finally {
+      setTyping(false);
+    }
+  }, [messages, setTyping, user, addMedicalRecord]);
+
+
 
   const handleAcceptDisclaimer = () => {
     showDisclaimer();
-    addMessage(
-      "မင်္ဂလာပါ! 👋 ကျွန်ုပ်သည် သင့် AI ကျန်းမာရေး လမ်းညွှန် ဖြစ်ပါသည်။ အထွေထွေ ကျန်းမာရေး မေးခွန်းများ၊ ကျန်းမာရေး အကြံပြုချက်များ နှင့် သင့်လျော်သော ဆေးကုသမှု လမ်းညွှန်ချက်များ ပေးနိုင်ပါသည်။\n\nHello! I'm your AI health navigator. I can help with health questions, wellness tips, and guide you to appropriate care.\n\n⚕️ ဆရာဝန် အကြံပေးချက် မဟုတ်ပါ။",
-      'ai'
-    );
   };
+
+  const welcomeMessage = useMemo<ChatMessage>(() => ({
+    id: 'welcome_msg_system',
+    text: language === 'my'
+      ? "မင်္ဂလာပါ! 👋 ကျွန်ုပ်သည် မြန်မာနိုင်ငံ၏ AI ကျန်းမာရေး လမ်းညွှန် ဖြစ်ပါသည်။ အထွေထွေ ကျန်းမာရေးမေးခွန်းများ ဖြေကြားခြင်း၊ ရောဂါလက္ခဏာ စစ်ဆေးခြင်းနှင့် အနီးဆုံးဆေးရုံများကို ရှာဖွေပေးနိုင်ပါသည်။\n\n⚠️ သတိပြုရန်: ကျွန်ုပ်သည် ဆရာဝန်မဟုတ်ပါ။ အရေးပေါ်ဖြစ်ပါက 192 သို့ ချက်ချင်းခေါ်ဆိုပါ။"
+      : "Hello! 👋 I'm Myanmar's AI health navigator. I can help with health questions, symptom checks, and finding nearby hospitals.\n\n⚠️ Disclaimer: I am not a doctor. In an emergency, dial 192 immediately.",
+    sender: 'ai',
+    timestamp: new Date(),
+  }), [language]);
+
+  const displayMessages = useMemo(() => {
+    // Strip out any legacy 'welcome' messages that might be stuck in user's parsed local storage
+    const filteredMessages = messages.filter(m => !m.text.includes("I'm Myanmar's AI health navigator") && !m.text.includes("မြန်မာနိုင်ငံ၏ AI"));
+    return disclaimerShown ? [welcomeMessage, ...filteredMessages] : filteredMessages;
+  }, [disclaimerShown, welcomeMessage, messages]);
 
   return (
     <GradientBackground>
@@ -333,12 +372,20 @@ export default function ChatScreen() {
               </Text>
             </View>
           </View>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('HospitalFinder', {})}
-            style={styles.hospitalHeaderBtn}
-          >
-            <Ionicons name="medical" size={18} color={colors.teal} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row' }}>
+            <TouchableOpacity
+              onPress={handleGenerateSummary}
+              style={[styles.headerBtn, { marginRight: spacing.sm }]}
+            >
+              <Ionicons name="document-text" size={18} color={colors.teal} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('HospitalFinder', {})}
+              style={styles.headerBtn}
+            >
+              <Ionicons name="medical" size={18} color={colors.teal} />
+            </TouchableOpacity>
+          </View>
         </LinearGradient>
 
         <OfflineBanner />
@@ -346,14 +393,10 @@ export default function ChatScreen() {
         {/* Messages */}
         <FlatList
           ref={flatListRef}
-          data={messages}
+          data={displayMessages}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <MessageBubble
-              message={item}
-              onSpeak={handleSpeak}
-              isSpeaking={isSpeaking}
-            />
+            <MessageBubble message={item} />
           )}
           contentContainerStyle={styles.messagesList}
           style={styles.messagesContainer}
@@ -366,7 +409,7 @@ export default function ChatScreen() {
             }, 100);
           }}
           onLayout={() => {
-            if (messages.length > 0) {
+            if (displayMessages.length > 0) {
               setTimeout(() => {
                 flatListRef.current?.scrollToEnd({ animated: false });
               }, 100);
@@ -469,7 +512,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 56,
+    paddingTop: 64,
     paddingBottom: spacing.lg,
     paddingHorizontal: spacing.xl,
   },
@@ -489,12 +532,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     ...typography.h3,
     fontSize: 16,
+    paddingTop: 4,
   },
   headerStatus: {
     ...typography.caption,
     color: colors.success,
   },
-  hospitalHeaderBtn: {
+  headerBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -547,8 +591,9 @@ const styles = StyleSheet.create({
   },
   bubbleText: {
     ...typography.body,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 26,
+    paddingTop: 4,
   },
   userBubbleText: {
     color: colors.text,
@@ -645,20 +690,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.white,
-    borderRadius: 20,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: spacing.md,
-    paddingVertical: Platform.OS === 'ios' ? spacing.sm : spacing.xs,
+    paddingVertical: Platform.OS === 'ios' ? 6 : 0,
     marginRight: spacing.xs,
-    minHeight: 44,
-    maxHeight: 100,
+    minHeight: 48,
+    maxHeight: 120,
   },
   input: {
     flex: 1,
     fontSize: 16,
+    lineHeight: 24,
     color: colors.text,
-    paddingVertical: Platform.OS === 'ios' ? spacing.xs : 0,
+    paddingTop: Platform.OS === 'ios' ? 8 : 10,
+    paddingBottom: Platform.OS === 'ios' ? 8 : 10,
     paddingHorizontal: 0,
     maxHeight: 80,
     textAlignVertical: 'center',

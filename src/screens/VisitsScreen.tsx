@@ -142,7 +142,7 @@ export default function HealthToolsScreen({ navigation }: any) {
             <Text style={styles.sectionTitle}>{language === 'my' ? 'ရောဂါလက္ခဏာ စစ်ဆေးရန်' : 'Symptom Checker'}</Text>
           </View>
 
-          <TouchableOpacity onPress={() => navigation.navigate('Chat')} activeOpacity={0.85}>
+          <TouchableOpacity onPress={() => navigation.navigate('Companion')} activeOpacity={0.85}>
             <Card style={styles.toolCard}>
               <View style={styles.toolCardContent}>
                 <View>
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 40 },
 
   header: {
-    paddingTop: 60,
+    paddingTop: 64,
     paddingBottom: spacing.xxl,
     paddingHorizontal: spacing.xxl,
     borderBottomLeftRadius: borderRadius.lg,
@@ -343,6 +343,8 @@ const styles = StyleSheet.create({
   toolCardTitle: {
     ...typography.h3,
     fontSize: 15,
+    lineHeight: 26,
+    paddingTop: 4,
     marginBottom: spacing.xs,
   },
   toolCardDesc: {

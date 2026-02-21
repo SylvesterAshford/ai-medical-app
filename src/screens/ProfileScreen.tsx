@@ -163,13 +163,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 56,
+    paddingTop: 68,
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.lg,
   },
   backBtn: {},
   headerTitle: {
     ...typography.h2,
+    paddingTop: 6,
   },
 
   // Profile card

@@ -111,8 +111,30 @@ export type RootStackParamList = {
 
 export type MainTabParamList = {
   Home: undefined;
-  Chat: undefined;
-  ImageAnalysis: undefined;
-  HealthTools: undefined;
+  Companion: undefined;
+  Analysis: undefined;
+  Visits: undefined;
   Profile: undefined;
 };
+
+export interface HealthProfile {
+  id: string;
+  userId: string;
+  chronicConditions: string[];
+  allergies: string[];
+  currentMedications: string[];
+  updatedAt: string;
+}
+
+export type MedicalRecordType = 'Visit' | 'Lab' | 'Prescription';
+
+export interface MedicalRecord {
+  id: string;
+  userId: string;
+  type: MedicalRecordType;
+  summary: string;
+  rawTextOcr?: string;
+  imageUrl?: string;
+  followUpDate?: string;
+  createdAt: string;
+}

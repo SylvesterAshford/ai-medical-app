@@ -12,9 +12,9 @@ const { width } = Dimensions.get('window');
 
 const TAB_CONFIG = [
   { name: 'Home', icon: 'home', iconOutline: 'home-outline', labelKey: 'tab.home' as const },
-  { name: 'HealthTools', icon: 'calendar', iconOutline: 'calendar-outline', labelKey: 'tab.tools' as const },
-  { name: 'Chat', icon: 'chatbubble-ellipses', iconOutline: 'chatbubble-ellipses-outline', labelKey: 'tab.chat' as const, isCenter: true },
-  { name: 'ImageAnalysis', icon: 'image', iconOutline: 'image-outline', labelKey: 'tab.scan' as const },
+  { name: 'Visits', icon: 'folder', iconOutline: 'folder-outline', labelKey: 'tab.visits' as const },
+  { name: 'Companion', icon: 'chatbubble-ellipses', iconOutline: 'chatbubble-ellipses-outline', labelKey: 'tab.companion' as const, isCenter: true },
+  { name: 'Analysis', icon: 'scan', iconOutline: 'scan-outline', labelKey: 'tab.analysis' as const },
   { name: 'Profile', icon: 'settings', iconOutline: 'settings-outline', labelKey: 'tab.profile' as const },
 ];
 
@@ -97,14 +97,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingBottom: 20,
+    // A bit more breathing room from the bottom safe area
+    paddingBottom: 24,
     paddingHorizontal: spacing.xl,
   },
   bar: {
     flexDirection: 'row',
     backgroundColor: colors.white,
     borderRadius: 28,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
     alignItems: 'center',
     justifyContent: 'space-around',
@@ -116,12 +117,14 @@ const styles = StyleSheet.create({
   tabBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
     minWidth: 50,
   },
   tabLabel: {
     ...typography.tabLabel,
-    marginTop: 3,
+    // Provide breathing room around the tab label
+    marginTop: 2,
+    paddingBottom: 2,
   },
   centerBtnWrap: {
     marginTop: -28,

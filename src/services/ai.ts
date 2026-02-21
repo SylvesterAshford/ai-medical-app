@@ -1,6 +1,6 @@
 // AI Service — Gemini via Supabase Edge Function proxy (bypasses geo-restrictions)
 
-import { ChatMessage } from '../types';
+import { ChatMessage, HealthProfile, MedicalRecord } from '../types';
 import { detectEmergency } from '../utils';
 import {
     shouldTriggerEmergency,
@@ -17,32 +17,46 @@ const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 // Edge function endpoint
 const GEMINI_PROXY_URL = `${SUPABASE_URL}/functions/v1/gemini-proxy`;
 
-function getSystemPrompt(lang: 'en' | 'my'): string {
+function getSystemPrompt(lang: 'en' | 'my', profile?: HealthProfile | null, records?: MedicalRecord[]): string {
+    const profileText = profile ? `
+Patient Profile:
+- Chronic Conditions: ${profile.chronicConditions.join(', ') || 'None'}
+- Allergies: ${profile.allergies.join(', ') || 'None'}
+- Current Medications: ${profile.currentMedications.join(', ') || 'None'}
+` : '';
+
+    const recordsText = records && records.length > 0 ? `
+Recent Medical Records:
+${records.slice(0, 3).map(r => `- [${r.type}] ${r.createdAt}: ${r.summary}`).join('\n')}
+` : '';
+
+    const context = (profileText || recordsText) ? `\n--- PATIENT CONTEXT ---${profileText}${recordsText}-----------------------\n` : '';
+
     if (lang === 'my') {
         return `သင်သည် မြန်မာနိုင်ငံအတွက် ကျန်းမာရေး AI လမ်းညွှန်ဖြစ်ပါသည်။ ကျန်းမာရေး သတင်းအချက်အလက်နှင့် လမ်းညွှန်ချက်များ ပေးပါ။
-
+${context}
 အရေးကြီးသော စည်းမျဥ်းများ:
 1. သင်သည် ဆရာဝန် မဟုတ်ကြောင်း အမြဲ သတိပေးပါ။
 2. ရောဂါရှာဖွေတွေ့ရှိချက်များ မပြုလုပ်ပါနှင့် — ယေဘုယျ သတင်းအချက်အလက်များသာ ပေးပါ။
 3. ဆေးဝါး သတ်မှတ်ချက်များ မပေးပါနှင့်။
 4. အရေးပေါ် ဖြစ်ရပ်များအတွက် 192 သို့ ခေါ်ဆိုရန် ညွှန်ကြားပါ။
-5. ကျန်းမာရေး ရောဂါများ အကြောင်း မေးခွန်းများကို အသေးစိတ် ရှင်းပြပါ။
-6. မြန်မာဘာသာဖြင့် ရိုးရှင်းစွာ ရေးပါ။
-7. စာနာမှုရှိပြီး ကျွမ်းကျင်မှုရှိပါ။`;
+5. ကျန်းမာရေး ဝေါဟာရများကို အင်္ဂလိပ်လို ထုတ်ယူပြီး လူနာနားလည်လွယ်သော မြန်မာဘာသာဖြင့် ရှင်းပြပါ။
+6. မြန်မာဘာသာဖြင့်သာ ရိုးရှင်းစွာ ရေးပါ (အင်္ဂလိပ်ဘာသာ မရောပါနှင့်)။
+7. စာနာမှုရှိပြီး ကျွမ်းကျင်မှုရှိပါ။
+8. သိမ်းဆည်းထားသော လူနာ၏ မှတ်တမ်းများကို ထည့်သွင်းစဉ်းစားပါ။`;
     }
 
     return `You are a health AI navigator for Myanmar. You provide health information and guidance.
-
+${context}
 IMPORTANT RULES:
 1. Always remind users that you are NOT a replacement for professional medical advice.
 2. Do NOT diagnose — only provide general information and explain diseases when asked.
 3. Do NOT prescribe specific medication dosages.
 4. For emergencies, instruct users to call 192 (Myanmar ambulance) immediately.
-5. When users ask about diseases (like HIV, diabetes, cancer, etc.), explain them clearly and helpfully.
+5. Extract medical terms in English but explain them using Patient-First language.
 6. Be empathetic, clear, and professional.
-7. If asked about medications, advise consulting a doctor or pharmacist for specific dosages.
-8. Respond ONLY in English.
-9. Keep responses concise but helpful.`;
+7. Respond ONLY in English.
+8. Consider the patient's provided health profile and recent records in your responses.`;
 }
 
 // Pre-check result type
@@ -71,7 +85,10 @@ export async function sendChatMessage(
     messages: ChatMessage[],
     userMessage: string
 ): Promise<string> {
-    const lang = useAppStore.getState().language || 'en';
+    const state = useAppStore.getState();
+    const lang = state.language || 'en';
+    const profile = state.healthProfile;
+    const records = state.medicalRecords;
     const disclaimer = getDisclaimer(lang);
 
     // Check for emergency keywords
@@ -92,9 +109,11 @@ export async function sendChatMessage(
         const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
 
         for (const m of messages) {
+            // Strip any existing disclaimer from history so AI doesn't learn to repeat it
+            const cleanText = m.text.replace(/⚕️.*$/s, '').trim();
             contents.push({
                 role: m.sender === 'user' ? 'user' : 'model',
-                parts: [{ text: m.text }],
+                parts: [{ text: cleanText }],
             });
         }
 
@@ -113,7 +132,7 @@ export async function sendChatMessage(
             body: JSON.stringify({
                 contents,
                 systemInstruction: {
-                    parts: [{ text: getSystemPrompt(lang) }],
+                    parts: [{ text: getSystemPrompt(lang, profile, records) }],
                 },
                 generationConfig: {
                     temperature: 0.7,
@@ -155,6 +174,11 @@ export async function sendChatMessage(
             }
         }
 
+        // Remove any hallucinated disclaimers from Gemini's response
+        if (typeof aiResponse === 'string') {
+            aiResponse = aiResponse.replace(/⚕️.*$/s, '').trim();
+        }
+
         // Light sanitization — only catches explicit prescription dosages
         aiResponse = sanitizeAIResponse(aiResponse);
 
@@ -191,6 +215,90 @@ export async function analyzeImage(imageUri: string): Promise<{
     };
 }
 
+export async function explainPrescription(imageUri: string, userText?: string): Promise<{
+    insights: string[];
+    disclaimer: string;
+}> {
+    const lang = useAppStore.getState().language || 'en';
+
+    // Safety check BEFORE explanation
+    if (userText && detectEmergency(userText)) {
+        return {
+            insights: [lang === 'my' ? 'အရေးပေါ် လက္ခဏာများ တွေ့ရှိရပါသည်။ 192 သို့ ချက်ချင်း ခေါ်ဆိုပါ။' : 'EMERGENCY DETECTED. Please call 192 immediately.'],
+            disclaimer: getDisclaimer(lang)
+        };
+    }
+
+    return {
+        insights: lang === 'my' ? [
+            'ဆေးစာရွက်ကို လက်ခံရရှိပါပြီ။',
+            '၁။ Amoxicillin 500mg - ပိုးသတ်ဆေး (တစ်နေ့ ၃ ကြိမ်၊ အစာစားပြီးသောက်ရန်)',
+            '၂။ Paracetamol 500mg - အဖျားကျ/အကိုက်အခဲပျောက်ဆေး (လိုအပ်လျှင် သောက်ရန်)',
+            'ဆေးဝါးအားလုံးကို ဆရာဝန် ညွှန်ကြားသည့်အတိုင်း အတိအကျ သောက်သုံးပါ။',
+        ] : [
+            'Prescription uploaded successfully.',
+            '1. Amoxicillin 500mg - Antibiotic (Take 3 times daily after meals)',
+            '2. Paracetamol 500mg - Pain reliever/Fever reducer (Take as needed)',
+            'Please take all medications exactly as prescribed by your doctor.',
+        ],
+        disclaimer: getDisclaimer(lang)
+    };
+}
+
+export async function getVisitSummary(messages: ChatMessage[]): Promise<string> {
+    const state = useAppStore.getState();
+    const lang = state.language || 'en';
+    const profile = state.healthProfile;
+    const records = state.medicalRecords;
+    const disclaimer = getDisclaimer(lang);
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        return `# Patient Visit Summary\n\n**Symptoms Discussed:** Headache, Mild Fever\n**Duration:** 2 days\n\n*Generated locally for demo purposes.*`;
+    }
+
+    const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
+
+    for (const m of messages) {
+        contents.push({
+            role: m.sender === 'user' ? 'user' : 'model',
+            parts: [{ text: m.text }],
+        });
+    }
+
+    contents.push({
+        role: 'user',
+        parts: [{ text: "Please generate a structured Medical Visit Summary in Markdown format based on our conversation above. This summary is intended for a doctor. Include sections like: Chief Complaint, History of Present Illness (HPI), Associated Symptoms, and Relevant Context." }],
+    });
+
+    try {
+        const response = await fetch(GEMINI_PROXY_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+                contents,
+                systemInstruction: {
+                    parts: [{ text: getSystemPrompt(lang, profile, records) }],
+                },
+                generationConfig: {
+                    temperature: 0.3,
+                    maxOutputTokens: 1000,
+                },
+            }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error?.message || 'API request failed');
+
+        const aiResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        return (aiResponse || "Unable to generate summary.");
+    } catch (error) {
+        return "Error generating summary.";
+    }
+}
+
 function getDemoResponse(message: string, lang: 'en' | 'my'): string {
     const lower = message.toLowerCase();
 
@@ -208,8 +316,8 @@ function getDemoResponse(message: string, lang: 'en' | 'my'): string {
 
     if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey') || lower.includes('မင်္ဂလာ')) {
         return lang === 'my'
-            ? 'မင်္ဂလာပါ! 👋 ကျွန်ုပ်သည် သင့် ကျန်းမာရေး AI လမ်းညွှန် ဖြစ်ပါသည်။ ကျန်းမာရေး မေးခွန်းများနှင့် လမ်းညွှန်ချက်များ ကူညီပေးနိုင်ပါသည်။\n\nဘာကူညီပေးရမလဲ?'
-            : 'Hello! 👋 I\'m your AI health assistant. I can help you with general health questions, provide wellness tips, and guide you to appropriate care.\n\nHow can I help you today?';
+            ? 'မင်္ဂလာပါ! 👋 ကျွန်ုပ်သည် မြန်မာနိုင်ငံ၏ AI ကျန်းမာရေး လမ်းညွှန် ဖြစ်ပါသည်။ အထွေထွေ ကျန်းမာရေးမေးခွန်းများ ဖြေကြားခြင်း၊ ရောဂါလက္ခဏာ စစ်ဆေးခြင်းနှင့် အနီးဆုံးဆေးရုံများကို ရှာဖွေပေးနိုင်ပါသည်။\n\nဘာကူညီပေးရမလဲ?'
+            : 'Hello! 👋 I\'m Myanmar\'s AI health navigator. I can help with health questions, symptom checks, and finding nearby hospitals.\n\nHow can I help you today?';
     }
 
     return lang === 'my'

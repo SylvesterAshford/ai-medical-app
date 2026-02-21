@@ -1,7 +1,7 @@
 // Zustand global store
 
 import { create } from 'zustand';
-import { ChatMessage, User, TriageResponse, Hospital, SymptomCategory } from '../types';
+import { ChatMessage, User, TriageResponse, Hospital, SymptomCategory, HealthProfile, MedicalRecord } from '../types';
 import { generateId } from '../utils';
 
 interface AppState {
@@ -45,6 +45,13 @@ interface AppState {
     // Cached Hospitals
     cachedHospitals: Hospital[];
     setCachedHospitals: (hospitals: Hospital[]) => void;
+
+    // Companion
+    healthProfile: HealthProfile | null;
+    medicalRecords: MedicalRecord[];
+    setHealthProfile: (profile: HealthProfile | null) => void;
+    addMedicalRecord: (record: MedicalRecord) => void;
+    setMedicalRecords: (records: MedicalRecord[]) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -73,6 +80,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         triageResponses: [],
         currentTriageCategory: null,
         isEmergencyMode: false,
+        healthProfile: null,
+        medicalRecords: [],
     }),
 
     setOnboardingSeen: () => set({ hasSeenOnboarding: true }),
@@ -144,5 +153,17 @@ export const useAppStore = create<AppState>((set, get) => ({
     cachedHospitals: [],
 
     setCachedHospitals: (hospitals: Hospital[]) => set({ cachedHospitals: hospitals }),
+
+    // Companion
+    healthProfile: null,
+    medicalRecords: [],
+
+    setHealthProfile: (profile: HealthProfile | null) => set({ healthProfile: profile }),
+
+    addMedicalRecord: (record: MedicalRecord) => set(state => ({
+        medicalRecords: [record, ...state.medicalRecords]
+    })),
+
+    setMedicalRecords: (records: MedicalRecord[]) => set({ medicalRecords: records }),
 }));
 

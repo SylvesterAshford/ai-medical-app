@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, ActivityIndicator, Dimensions,
+  Image, ActivityIndicator, Dimensions, Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -11,7 +11,7 @@ import GradientBackground from '../components/GradientBackground';
 import Card from '../components/Card';
 import GradientButton from '../components/GradientButton';
 import { colors, spacing, typography, borderRadius, shadows, gradients } from '../theme';
-import { analyzeImage } from '../services/ai';
+import { analyzeImage, explainPrescription } from '../services/ai';
 import { useAppStore } from '../store/useAppStore';
 
 const { width } = Dimensions.get('window');
@@ -23,6 +23,7 @@ export default function ImageAnalysisScreen({ navigation }: any) {
     insights: string[];
     disclaimer: string;
   } | null>(null);
+  const [isPrescriptionMode, setIsPrescriptionMode] = useState(false);
   const language = useAppStore(s => s.language);
 
   const pickImage = async () => {
@@ -60,7 +61,9 @@ export default function ImageAnalysisScreen({ navigation }: any) {
     if (!imageUri) return;
     setIsAnalyzing(true);
     try {
-      const analysis = await analyzeImage(imageUri);
+      const analysis = isPrescriptionMode
+          ? await explainPrescription(imageUri)
+          : await analyzeImage(imageUri);
       setResults(analysis);
     } catch {
       setResults({
@@ -92,9 +95,25 @@ export default function ImageAnalysisScreen({ navigation }: any) {
 
         <Text style={styles.description}>
           {language === 'my'
-            ? 'AI ခွဲခြမ်းစိတ်ဖြာရန် ဆေးဘက်ဆိုင်ရာ ပုံများ တင်ပါ။ X-rayများနှင့် အခြားပုံများအတွက် အသေးစိတ် ရလဒ်များ ရယူပါ။'
-            : 'Upload medical images for instant AI-powered analysis. Get comprehensive insights from X-rays, MRIs, CT scans, and more.'}
+            ? 'AI ခွဲခြမ်းစိတ်ဖြာရန် ဆေးဘက်ဆိုင်ရာ ပုံများ တင်ပါ။ သင်္ကေတများ သို့ ဆေးစာရွက်များကို လွယ်ကူသော မြန်မာဘာသာဖြင့် ရှင်းပြပါမည်။'
+            : 'Upload medical images for instant AI-powered analysis. Get comprehensive insights from X-rays, MRIs, scans, or translate prescriptions.'}
         </Text>
+
+        {/* Mode Toggle */}
+        <View style={styles.modeToggleContainer}>
+          <Text style={[styles.modeText, !isPrescriptionMode && styles.activeModeText]}>
+            {language === 'my' ? 'အထွေထွေ ပုံစံ' : 'General Analysis'}
+          </Text>
+          <Switch
+            value={isPrescriptionMode}
+            onValueChange={setIsPrescriptionMode}
+            trackColor={{ false: colors.textSecondary, true: colors.teal }}
+            thumbColor={colors.white}
+          />
+          <Text style={[styles.modeText, isPrescriptionMode && styles.activeModeText]}>
+            {language === 'my' ? 'ဆေးစာရွက် ရှင်းပြခြင်း' : 'Prescription Translator'}
+          </Text>
+        </View>
 
         {/* Upload Card */}
         <TouchableOpacity onPress={pickImage} activeOpacity={0.85}>
@@ -185,7 +204,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 56,
+    paddingTop: 60,
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.lg,
   },
@@ -200,15 +219,40 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...typography.h2,
+    // Nudge down to avoid clipping Burmese glyph tops
+    paddingTop: 4,
   },
 
   description: {
     ...typography.bodySmall,
     paddingHorizontal: spacing.xxl,
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.lg,
     lineHeight: 20,
     textAlign: 'center',
   },
+
+  modeToggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xl,
+    backgroundColor: colors.white,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    marginHorizontal: spacing.xxl,
+    borderRadius: borderRadius.md,
+    ...shadows.card,
+  },
+  modeText: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    marginHorizontal: spacing.sm,
+  },
+  activeModeText: {
+    color: colors.teal,
+    fontWeight: '600',
+  },
+
 
   // Upload
   uploadCard: {

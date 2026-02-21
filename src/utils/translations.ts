@@ -5,9 +5,9 @@ export type Language = 'en' | 'my';
 const translations = {
     // Tab Bar
     'tab.home': { en: 'Home', my: 'ပင်မ' },
-    'tab.tools': { en: 'Tools', my: 'ကိရိယာ' },
-    'tab.chat': { en: 'Chat', my: 'ချတ်' },
-    'tab.scan': { en: 'Scan', my: 'စကန်' },
+    'tab.visits': { en: 'Visits', my: 'မှတ်တမ်း' },
+    'tab.companion': { en: 'Companion', my: 'အဖော်' },
+    'tab.analysis': { en: 'Analysis', my: 'စကန်' },
     'tab.profile': { en: 'Profile', my: 'ကိုယ်ရေး' },
 
     // Home Screen

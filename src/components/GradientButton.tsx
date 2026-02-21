@@ -58,7 +58,6 @@ const styles = StyleSheet.create({
   text: {
     ...typography.button,
     color: colors.white,
-    lineHeight: 24,
     paddingTop: Platform.OS === 'ios' ? 4 : 8,
     paddingBottom: Platform.OS === 'ios' ? 4 : 6,
   },

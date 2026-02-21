@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   toolCardTitle: {
     ...typography.h3,
     fontSize: 15,
-    lineHeight: 26,
+
     paddingTop: 4,
     marginBottom: spacing.xs,
   },
@@ -401,6 +401,6 @@ const styles = StyleSheet.create({
   },
   tipDesc: {
     ...typography.bodySmall,
-    lineHeight: 18,
+
   },
 });

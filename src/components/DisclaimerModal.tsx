@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   body: {
     ...typography.bodySmall,
     textAlign: 'center',
-    lineHeight: 20,
+
     marginBottom: spacing.lg,
   },
   divider: {

@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     paddingHorizontal: spacing.xxl,
     marginBottom: spacing.lg,
-    lineHeight: 20,
+
     textAlign: 'center',
   },
 
@@ -372,6 +372,6 @@ const styles = StyleSheet.create({
   disclaimerText: {
     ...typography.bodySmall,
     color: '#856404',
-    lineHeight: 18,
+
   },
 });

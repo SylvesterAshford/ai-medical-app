@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
   bubbleText: {
     ...typography.body,
     fontSize: 15,
-    lineHeight: 26,
+
     paddingTop: 4,
   },
   userBubbleText: {
@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    lineHeight: 24,
+
     color: colors.text,
     paddingTop: Platform.OS === 'ios' ? 8 : 10,
     paddingBottom: Platform.OS === 'ios' ? 8 : 10,

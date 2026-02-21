@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     textAlign: 'center',
     marginBottom: spacing.sm,
-    lineHeight: 28,
+
   },
   questionEn: {
     ...typography.body,

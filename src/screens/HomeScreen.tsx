@@ -281,15 +281,11 @@ const styles = StyleSheet.create({
   featureTitle: {
     ...typography.h3,
     fontSize: 15,
-    lineHeight: 26,
-    paddingTop: 6,
     marginBottom: spacing.xs,
   },
   featureSubtitle: {
     ...typography.bodySmall,
     fontSize: 12,
-    lineHeight: 22,
-    paddingTop: 4,
     marginBottom: spacing.sm,
   },
   featureBtn: {
@@ -331,15 +327,11 @@ const styles = StyleSheet.create({
   topicTitle: {
     ...typography.h3,
     fontSize: 14,
-    lineHeight: 24,
-    paddingTop: 6,
     marginBottom: spacing.xs,
   },
   topicDesc: {
     ...typography.bodySmall,
     fontSize: 12,
-    lineHeight: 20,
-    paddingTop: 4,
     marginBottom: spacing.md,
   },
   topicBtn: {

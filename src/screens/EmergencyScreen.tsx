@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     color: '#8B6914',
     textAlign: 'center',
     marginBottom: spacing.sm,
-    lineHeight: 40,
+
   },
   mainTextEn: {
     fontSize: 16,
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#9A7B2C',
     textAlign: 'center',
-    lineHeight: 24,
+
     marginBottom: spacing.xs,
   },
   subtextEn: {
@@ -275,6 +275,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#B8932E',
     textAlign: 'center',
-    lineHeight: 18,
+
   },
 });

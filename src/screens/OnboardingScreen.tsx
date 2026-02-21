@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.xxxl,
-    lineHeight: 24,
+
   },
   button: {
     width: '100%',

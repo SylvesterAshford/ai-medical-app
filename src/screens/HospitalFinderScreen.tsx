@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
     ...typography.h3,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 26,
+
   },
   emptySubtitle: {
     ...typography.bodySmall,

@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   termsText: {
     ...typography.caption,
     textAlign: 'center',
-    lineHeight: 18,
+
     marginBottom: spacing.lg,
   },
   termsLink: {

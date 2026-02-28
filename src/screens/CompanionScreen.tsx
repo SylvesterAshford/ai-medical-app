@@ -292,7 +292,9 @@ export default function ChatScreen() {
     }
     setTyping(true);
     try {
-      const summaryText = await getVisitSummary(messages);
+      const rawSummary = await getVisitSummary(messages);
+      // Strip the AI disclaimer from PDF output
+      const summaryText = rawSummary.replace(/⚕️.*$/s, '').trim();
 
       const htmlContent = `
         <html>

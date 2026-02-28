@@ -1,7 +1,8 @@
 // Root App Navigator — Auth flow + Main tabs
 
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useNavigationContainerRef } from '@react-navigation/native';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import LoginScreen from '../screens/LoginScreen';
 import SubscriptionScreen from '../screens/SubscriptionScreen';
@@ -10,14 +11,37 @@ import EmergencyScreen from '../screens/EmergencyScreen';
 import MainTabNavigator from './MainTabNavigator';
 import { useAppStore } from '../store/useAppStore';
 import { RootStackParamList } from '../types';
+import { trackScreenView } from '../services/analytics';
+import { setUserContext } from '../services/errorTracking';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
-  const { isAuthenticated, hasSeenOnboarding } = useAppStore();
+  const { isAuthenticated, hasSeenOnboarding, user } = useAppStore();
+  const currentRoute = useRef<string | undefined>(undefined);
+
+  // Set user context for error tracking when authenticated
+  React.useEffect(() => {
+    if (isAuthenticated && user) {
+      setUserContext({ id: user.id, email: user.email });
+    } else {
+      setUserContext(null);
+    }
+  }, [isAuthenticated, user]);
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      screenOptions={{ headerShown: false }}
+      screenListeners={{
+        state: (e) => {
+          const route = e.data?.state?.routes?.[e.data?.state?.index ?? 0];
+          if (route && route.name !== currentRoute.current) {
+            currentRoute.current = route.name;
+            trackScreenView(route.name);
+          }
+        },
+      }}
+    >
       {!isAuthenticated ? (
         <>
           {!hasSeenOnboarding && (
@@ -57,4 +81,5 @@ export default function AppNavigator() {
     </Stack.Navigator>
   );
 }
+
 

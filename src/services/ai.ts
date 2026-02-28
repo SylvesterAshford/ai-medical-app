@@ -12,6 +12,9 @@ import {
 } from '../utils/triageRules';
 import { useAppStore } from '../store/useAppStore';
 import * as Location from 'expo-location';
+import { measureTime } from '../utils/performance';
+import { captureError } from './errorTracking';
+import { trackEvent } from './analytics';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -151,7 +154,7 @@ export async function sendChatMessage(
         });
 
         // Call Supabase Edge Function (proxy to Gemini)
-        const response = await fetch(GEMINI_PROXY_URL, {
+        const response = await measureTime('Gemini AI response', () => fetch(GEMINI_PROXY_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -179,7 +182,7 @@ export async function sendChatMessage(
                     },
                 ],
             }),
-        });
+        }));
 
         const data = await response.json();
 
@@ -233,9 +236,10 @@ export async function sendChatMessage(
             aiResponse = aiResponse.replace(/\[SEARCH_HOSPITAL:\s*(.+?)\]/i, friendlyMsg);
         }
 
+        trackEvent('chat_message_sent', { lang, hasHospitals: !!hospitals });
         return { text: aiResponse + disclaimer, hospitals };
     } catch (error) {
-        console.error('AI proxy error:', error);
+        captureError(error instanceof Error ? error : new Error(String(error)), { screen: 'Companion' });
         const errorMsg = lang === 'my'
             ? 'တောင်းပန်ပါသည်။ အမှားတစ်ခု ဖြစ်ပေါ်ခဲ့ပါသည်။ ချိတ်ဆက်မှု စစ်ဆေးပြီး ထပ်ကြိုးစားပါ။'
             : 'I apologize, there was an error processing your request. Please check your connection and try again.';

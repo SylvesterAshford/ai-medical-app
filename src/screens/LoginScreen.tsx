@@ -10,6 +10,8 @@ import GradientBackground from '../components/GradientBackground';
 import GradientButton from '../components/GradientButton';
 import { colors, spacing, typography, borderRadius, shadows } from '../theme';
 import { useAppStore } from '../store/useAppStore';
+import { validateEmail, validatePassword, validateName } from '../utils/validation';
+import { trackEvent } from '../services/analytics';
 
 const { height } = Dimensions.get('window');
 
@@ -19,12 +21,48 @@ export default function LoginScreen({ navigation }: any) {
   const [showPassword, setShowPassword] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState('');
+  const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string }>({});
   const login = useAppStore(s => s.login);
 
+  const validate = (): boolean => {
+    const newErrors: typeof errors = {};
+
+    const emailResult = validateEmail(email);
+    if (!emailResult.valid) newErrors.email = emailResult.error;
+
+    const passwordResult = validatePassword(password);
+    if (!passwordResult.valid) newErrors.password = passwordResult.error;
+
+    if (isSignUp) {
+      const nameResult = validateName(name);
+      if (!nameResult.valid) newErrors.name = nameResult.error;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleLogin = () => {
+    if (!validate()) return;
+
     const userName = name.trim() || email.split('@')[0] || 'User';
     login(userName, email);
+    trackEvent(isSignUp ? 'sign_up' : 'sign_in', { method: 'email' });
     // Navigation handled automatically by conditional rendering in AppNavigator
+  };
+
+  // Clear field error when user types
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    if (errors.email) setErrors(prev => ({ ...prev, email: undefined }));
+  };
+  const handlePasswordChange = (text: string) => {
+    setPassword(text);
+    if (errors.password) setErrors(prev => ({ ...prev, password: undefined }));
+  };
+  const handleNameChange = (text: string) => {
+    setName(text);
+    if (errors.name) setErrors(prev => ({ ...prev, name: undefined }));
   };
 
   return (
@@ -49,49 +87,58 @@ export default function LoginScreen({ navigation }: any) {
 
         <View style={styles.formCard}>
           {isSignUp && (
-            <View style={styles.inputContainer}>
-              <Ionicons name="person-outline" size={20} color={colors.textLight} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Full Name"
-                placeholderTextColor={colors.textLight}
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="words"
-              />
+            <View>
+              <View style={[styles.inputContainer, errors.name ? styles.inputError : null]}>
+                <Ionicons name="person-outline" size={20} color={colors.textLight} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Full Name"
+                  placeholderTextColor={colors.textLight}
+                  value={name}
+                  onChangeText={handleNameChange}
+                  autoCapitalize="words"
+                />
+              </View>
+              {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
             </View>
           )}
 
-          <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={20} color={colors.textLight} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email address"
-              placeholderTextColor={colors.textLight}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
+          <View>
+            <View style={[styles.inputContainer, errors.email ? styles.inputError : null]}>
+              <Ionicons name="mail-outline" size={20} color={colors.textLight} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Email address"
+                placeholderTextColor={colors.textLight}
+                value={email}
+                onChangeText={handleEmailChange}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
           </View>
 
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color={colors.textLight} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor={colors.textLight}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons
-                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                size={20}
-                color={colors.textLight}
+          <View>
+            <View style={[styles.inputContainer, errors.password ? styles.inputError : null]}>
+              <Ionicons name="lock-closed-outline" size={20} color={colors.textLight} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor={colors.textLight}
+                value={password}
+                onChangeText={handlePasswordChange}
+                secureTextEntry={!showPassword}
               />
-            </TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color={colors.textLight}
+                />
+              </TouchableOpacity>
+            </View>
+            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
           </View>
 
           {!isSignUp && (
@@ -129,7 +176,10 @@ export default function LoginScreen({ navigation }: any) {
 
         <TouchableOpacity
           style={styles.switchBtn}
-          onPress={() => setIsSignUp(!isSignUp)}
+          onPress={() => {
+            setIsSignUp(!isSignUp);
+            setErrors({});
+          }}
         >
           <Text style={styles.switchText}>
             {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
@@ -248,5 +298,17 @@ const styles = StyleSheet.create({
   switchLink: {
     color: colors.teal,
     fontWeight: '600',
+  },
+  inputError: {
+    borderColor: colors.error,
+    borderWidth: 1.5,
+  },
+  errorText: {
+    ...typography.caption,
+    color: colors.error,
+    marginTop: -spacing.sm,
+    marginBottom: spacing.sm,
+    marginLeft: spacing.lg,
+    paddingTop: 2,
   },
 });

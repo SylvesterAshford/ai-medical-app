@@ -256,6 +256,7 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: '700',
     fontSize: 10,
+    lineHeight: 28,
   },
   planHeader: {
     flexDirection: 'row',
@@ -286,6 +287,7 @@ const styles = StyleSheet.create({
   planName: {
     ...typography.h3,
     fontSize: 16,
+    lineHeight: 28,
   },
   planPeriod: {
     ...typography.bodySmall,

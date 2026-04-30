@@ -105,8 +105,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: colors.white,
     borderRadius: 28,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
     alignItems: 'center',
     justifyContent: 'space-around',
     ...shadows.card,
@@ -117,13 +117,15 @@ const styles = StyleSheet.create({
   tabBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.md,
+    paddingVertical: 6,
     minWidth: 50,
+    overflow: 'visible',
   },
   tabLabel: {
-    ...typography.tabLabel,
-    // Provide breathing room around the tab label
-    marginTop: 2,
+    fontSize: 11,
+    fontWeight: '500' as const,
+    lineHeight: 26,
+    marginTop: 3,
     paddingBottom: 2,
   },
   centerBtnWrap: {

@@ -268,6 +268,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: spacing.sm,
     color: colors.text,
+    lineHeight: 28,
   },
   inputBox: {
     flexDirection: 'row',
@@ -344,12 +345,13 @@ const styles = StyleSheet.create({
     ...typography.h3,
     fontSize: 15,
 
-    paddingTop: 4,
+
     marginBottom: spacing.xs,
   },
   toolCardDesc: {
     ...typography.bodySmall,
     maxWidth: width * 0.55,
+    lineHeight: 28,
   },
   toolArrow: {
     marginLeft: 'auto',
@@ -380,8 +382,10 @@ const styles = StyleSheet.create({
   riskLabel: {
     ...typography.bodySmall,
     fontWeight: '600',
-    fontSize: 11,
+    fontSize: 12,
     color: colors.text,
+    textAlign: 'center',
+    lineHeight: 26,
   },
 
   // Tips
@@ -401,6 +405,6 @@ const styles = StyleSheet.create({
   },
   tipDesc: {
     ...typography.bodySmall,
-
+    lineHeight: 28,
   },
 });

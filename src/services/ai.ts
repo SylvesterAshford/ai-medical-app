@@ -1,4 +1,5 @@
 // AI Service — Gemini via Supabase Edge Function proxy (bypasses geo-restrictions)
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 
 import { ChatMessage, HealthProfile, MedicalRecord, Hospital } from '../types';
 import { searchHospitalsByLocation } from './hospitals';
@@ -46,12 +47,12 @@ ${context}
 1. သင်သည် ဆရာဝန် မဟုတ်ကြောင်း အမြဲ သတိပေးပါ။
 2. ရောဂါရှာဖွေတွေ့ရှိချက်များ မပြုလုပ်ပါနှင့် — ယေဘုယျ သတင်းအချက်အလက်များသာ ပေးပါ။
 3. ဆေးဝါး သတ်မှတ်ချက်များ မပေးပါနှင့်။
-4. အရေးပေါ် ဖြစ်ရပ်များအတွက် 192 သို့ ခေါ်ဆိုရန် ညွှန်ကြားပါ။
+4. အရေးပေါ် ဖြစ်ရပ်များအတွက် 119 သို့ ခေါ်ဆိုရန် ညွှန်ကြားပါ။
 5. ကျန်းမာရေး ဝေါဟာရများကို အင်္ဂလိပ်လို ထုတ်ယူပြီး လူနာနားလည်လွယ်သော မြန်မာဘာသာဖြင့် ရှင်းပြပါ။
 6. မြန်မာဘာသာဖြင့်သာ ရိုးရှင်းစွာ ရေးပါ (အင်္ဂလိပ်ဘာသာ မရောပါနှင့်)။
 7. စာနာမှုရှိပြီး ကျွမ်းကျင်မှုရှိပါ။
 8. သိမ်းဆည်းထားသော လူနာ၏ မှတ်တမ်းများကို ထည့်သွင်းစဉ်းစားပါ။
-9. အကယ်၍ အသုံးပြုသူမှ ဆေးရုံများကို ရှာဖွေလိုပါက ${userCity ? 'ပေးထားသော လက်ရှိတည်နေရာကို အသုံးပြုပါ သို့မဟုတ် ' : ''}မြို့အမည်တိကျစွာဖြင့် ဤအတိုင်း အတိအကျ ပြန်စာရေးပါ- [SEARCH_HOSPITAL: CityName] (ဥပမာ- [SEARCH_HOSPITAL: Mandalay]). မြို့အမည် မရရှိပါက အသုံးပြုသူ၏ တည်နေရာကို မေးမြန်းပါ။ 'LocationName' ဟူသော စကားလုံးကို တိုက်ရိုက် မသုံးပါနှင့်။`;
+9. ONLY output the hospital search tag when the user EXPLICITLY asks to find, locate, or search for hospitals (e.g., 'ဆေးရုံ ရှာပေးပါ', 'အနီးဆုံး ဆေးရုံ ဘယ်မှာလဲ'). Do NOT suggest or recommend hospitals when the user is just asking general medical questions or about symptoms/conditions. When the user explicitly asks to find hospitals, respond using a specific city name exactly like this: [SEARCH_HOSPITAL: CityName] (e.g., [SEARCH_HOSPITAL: Mandalay]). ${userCity ? 'ပေးထားသော လက်ရှိတည်နေရာကို အသုံးပြုပါ။' : 'မြို့အမည် မရရှိပါက အသုံးပြုသူ၏ တည်နေရာကို မေးမြန်းပါ။'} 'LocationName' ဟူသော စကားလုံးကို တိုက်ရိုက် မသုံးပါနှင့်။`;
     }
 
     return `You are a health AI navigator for Myanmar. You provide health information and guidance.
@@ -60,12 +61,12 @@ IMPORTANT RULES:
 1. Always remind users that you are NOT a replacement for professional medical advice.
 2. Do NOT diagnose — only provide general information and explain diseases when asked.
 3. Do NOT prescribe specific medication dosages.
-4. For emergencies, instruct users to call 192 (Myanmar ambulance) immediately.
+4. For emergencies, instruct users to call 119 (Myanmar ambulance) immediately.
 5. Extract medical terms in English but explain them using Patient-First language.
 6. Be empathetic, clear, and professional.
 7. Respond ONLY in English.
 8. Consider the patient's provided health profile and recent records in your responses.
-9. If the user asks to find hospitals, you MUST output exactly this tag in your response using a specific city name: [SEARCH_HOSPITAL: CityName] (e.g., [SEARCH_HOSPITAL: Mandalay]). ${userCity ? 'Use the provided Current Location if no specific city is requested.' : 'If you do not know their city, politely ask for their location first.'} NEVER output the literal string 'LocationName'.`;
+9. ONLY output the hospital search tag when the user EXPLICITLY asks to find, locate, or search for hospitals (e.g., 'find me a hospital', 'nearest hospital', 'where is a hospital near me'). Do NOT suggest or recommend finding hospitals when the user is just asking general medical questions about symptoms, conditions, or treatments. When the user explicitly asks to find hospitals, you MUST output exactly this tag using a specific city name: [SEARCH_HOSPITAL: CityName] (e.g., [SEARCH_HOSPITAL: Mandalay]). ${userCity ? 'Use the provided Current Location if no specific city is requested.' : 'If you do not know their city, politely ask for their location first.'} NEVER output the literal string 'LocationName'.`;
 }
 
 // Pre-check result type
@@ -103,9 +104,9 @@ export async function sendChatMessage(
     // Check for emergency keywords
     if (detectEmergency(userMessage)) {
         if (lang === 'my') {
-            return { text: 'အရေးပေါ် အခြေအနေ ဖြစ်နိုင်ပါသည်။ ကျေးဇူးပြု၍ 192 သို့ ချက်ချင်းဖုန်းခေါ်ပါ သို့မဟုတ် အနီးဆုံးဆေးရုံသို့ သွားပါ။' + disclaimer };
+            return { text: 'အရေးပေါ် အခြေအနေ ဖြစ်နိုင်ပါသည်။ ကျေးဇူးပြု၍ 119 သို့ ချက်ချင်းဖုန်းခေါ်ပါ သို့မဟုတ် အနီးဆုံးဆေးရုံသို့ သွားပါ။' + disclaimer };
         }
-        return { text: 'This may be an emergency. Please call 192 immediately or go to the nearest hospital.' + disclaimer };
+        return { text: 'This may be an emergency. Please call 119 immediately or go to the nearest hospital.' + disclaimer };
     }
 
     // If no Supabase URL, return a demo response
@@ -252,22 +253,141 @@ export async function analyzeImage(imageUri: string): Promise<{
     disclaimer: string;
 }> {
     const lang = useAppStore.getState().language || 'en';
-    return {
-        insights: lang === 'my' ? [
-            'ပုံကို ခွဲခြမ်းစိတ်ဖြာမှုအတွက် လက်ခံရရှိပါပြီ။',
-            'အရေပြား ဆိုင်ရာ ပုံ ဖြစ်နိုင်ပါသည်။',
-            'အရေပြား အထူးကု ဆရာဝန်နှင့် ပြသရန် အကြံပြုပါသည်။',
-            'အရွယ်အစား၊ အရောင်၊ ပုံသဏ္ဍာန် ပြောင်းလဲမှုကို စောင့်ကြည့်ပါ။',
-        ] : [
-            'The image has been received for analysis.',
-            'Based on visual assessment, this appears to be a dermatological image.',
-            'Recommended: Consult with a dermatologist for a professional evaluation.',
-            'Monitor for any changes in size, color, or shape.',
-        ],
-        disclaimer: lang === 'my'
-            ? 'ဒီ AI ခွဲခြမ်းစိတ်ဖြာချက်သည် အချက်အလက်ရည်ရွယ်ချက်အတွက်သာ ဖြစ်ပါသည်။ ဆရာဝန်နှင့် တိုင်ပင်ပါ။'
-            : 'This AI analysis is for informational purposes only and should NOT be used as a medical diagnosis. Always consult a qualified healthcare professional.',
-    };
+    const disclaimer = lang === 'my'
+        ? 'ဒီ AI ခွဲခြမ်းစိတ်ဖြာချက်သည် အချက်အလက်ရည်ရွယ်ချက်အတွက်သာ ဖြစ်ပါသည်။ ဆရာဝန်နှင့် တိုင်ပင်ပါ။'
+        : 'This AI analysis is for informational purposes only and should NOT be used as a medical diagnosis. Always consult a qualified healthcare professional.';
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        return {
+            insights: lang === 'my' ? [
+                'ပုံကို ခွဲခြမ်းစိတ်ဖြာမှုအတွက် လက်ခံရရှိပါပြီ။',
+                'API ချိတ်ဆက်မှု မရှိသောကြောင့် သရုပ်ပြ ရလဒ်ဖြစ်ပါသည်။',
+                'အရေပြား အထူးကု ဆရာဝန်နှင့် ပြသရန် အကြံပြုပါသည်။',
+            ] : [
+                'Image received for analysis.',
+                'This is a demo result — no API connection configured.',
+                'Recommended: Consult with a specialist for professional evaluation.',
+            ],
+            disclaimer,
+        };
+    }
+
+    try {
+        const base64Data = await imageToBase64(imageUri);
+
+        const systemPrompt = lang === 'my'
+            ? `သင်သည် ကျွမ်းကျင်သော ဆေးဘက်ဆိုင်ရာ ပုံရိပ်ဖတ်ခြင်း AI လက်ထောက်ဖြစ်ပါသည်။ ဤဆေးဘက်ဆိုင်ရာ ပုံကို ခွဲခြမ်းစိတ်ဖြာပြီး markdown ပုံစံဖြင့် အစီရင်ခံစာ ပေးပါ။
+
+အောက်ပါ markdown ပုံစံအတိုင်း ရေးပါ:
+
+## ပုံအမျိုးအစားနှင့် အရည်အသွေး
+ပုံရိပ်ရယူသည့်နည်းလမ်း (X-ray, MRI, CT, Ultrasound, စသည်) ကို ဖော်ထုတ်ပါ
+
+## ခန္ဓာကိုယ်အစိတ်အပိုင်း
+ပုံရိပ်ရယူထားသော ခန္ဓာကိုယ်အပိုင်းကို ဖော်ပြပါ
+
+## အဓိကတွေ့ရှိချက်များ
+- တွေ့ရှိချက် ၁
+- တွေ့ရှိချက် ၂
+
+## ဖြစ်နိုင်ခြေရှိသော ရောဂါရှာဖွေချက်များ
+- ဖြစ်နိုင်ခြေ ၁
+- ဖြစ်နိုင်ခြေ ၂
+
+## အကြံပြုချက်များ
+- အကြံပြု ၁
+- အကြံပြု ၂
+
+> ⚠️ ဤခွဲခြမ်းစိတ်ဖြာချက်သည် ပညာရေးရည်ရွယ်ချက်အတွက်သာ ဖြစ်ပါသည်။
+
+စည်းမျဉ်းများ:
+- markdown headers (##) နှင့် bullet points (-) အသုံးပြုပါ
+- **bold** ဖြင့် အရေးကြီးသော ဝေါဟာရများကို မီးမောင်းထိုးပါ
+- ရောဂါရှာဖွေတွေ့ရှိချက် တိတိကျကျ မပြုလုပ်ပါနှင့်
+- "ဖြစ်နိုင်ပါသည်"၊ "ညွှန်ပြနေပါသည်" ကဲ့သို့ စကားလုံးများ အသုံးပြုပါ
+- ဆရာဝန်နှင့် ပြသရန် အမြဲတိုက်တွန်းပါ
+- မြန်မာဘာသာဖြင့်သာ ရေးပါ`
+            : `You are an expert medical imaging AI assistant. Analyze this medical image and provide a comprehensive report in markdown format.
+
+Use the following markdown structure:
+
+## Image Type & Quality
+Identify the imaging modality (X-ray, MRI, CT, Ultrasound, etc.) and assess image quality
+
+## Anatomical Region
+Specify the body part or region being imaged
+
+## Key Observations
+- Finding 1
+- Finding 2
+
+## Potential Diagnoses
+- Possible condition 1
+- Possible condition 2
+
+## Recommendations
+- Recommendation 1
+- Recommendation 2
+
+> ⚠️ This analysis is for educational purposes only and should not replace professional medical evaluation.
+
+Rules:
+- Use markdown headers (##) and bullet points (-) for structure
+- Use **bold** to highlight important medical terms
+- Do NOT provide definitive diagnoses — use words like "appears to be", "may indicate", "could suggest"
+- Always recommend consulting a medical professional
+- Respond ONLY in English`;
+
+
+        const response = await measureTime('Image analysis', () => fetch(GEMINI_PROXY_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+                contents: [{
+                    role: 'user',
+                    parts: [
+                        {
+                            inlineData: {
+                                mimeType: 'image/jpeg',
+                                data: base64Data,
+                            },
+                        },
+                        {
+                            text: lang === 'my'
+                                ? 'ဤပုံကို ကျန်းမာရေးအရ ခွဲခြမ်းစိတ်ဖြာပါ။'
+                                : 'Analyze this image from a health/medical perspective.',
+                        },
+                    ],
+                }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }],
+                },
+                generationConfig: {
+                    temperature: 0.4,
+                    maxOutputTokens: 1500,
+                },
+                safetySettings: [
+                    { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+                ],
+            }),
+        }));
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error?.message || 'Image analysis failed');
+
+        const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!aiText) throw new Error('No analysis response received');
+
+        trackEvent('image_analyzed', { mode: 'general', lang });
+        // Return the raw markdown text — the UI will render it with a markdown component
+        return { insights: [aiText], disclaimer };
+    } catch (error) {
+        captureError(error instanceof Error ? error : new Error(String(error)), { screen: 'Analysis' });
+        throw error;
+    }
 }
 
 export async function explainPrescription(imageUri: string, userText?: string): Promise<{
@@ -275,29 +395,134 @@ export async function explainPrescription(imageUri: string, userText?: string): 
     disclaimer: string;
 }> {
     const lang = useAppStore.getState().language || 'en';
+    const disclaimer = getDisclaimer(lang);
 
     // Safety check BEFORE explanation
     if (userText && detectEmergency(userText)) {
         return {
-            insights: [lang === 'my' ? 'အရေးပေါ် လက္ခဏာများ တွေ့ရှိရပါသည်။ 192 သို့ ချက်ချင်း ခေါ်ဆိုပါ။' : 'EMERGENCY DETECTED. Please call 192 immediately.'],
-            disclaimer: getDisclaimer(lang)
+            insights: [lang === 'my' ? 'အရေးပေါ် လက္ခဏာများ တွေ့ရှိရပါသည်။ 119 သို့ ချက်ချင်း ခေါ်ဆိုပါ။' : 'EMERGENCY DETECTED. Please call 119 immediately.'],
+            disclaimer,
         };
     }
 
-    return {
-        insights: lang === 'my' ? [
-            'ဆေးစာရွက်ကို လက်ခံရရှိပါပြီ။',
-            '၁။ Amoxicillin 500mg - ပိုးသတ်ဆေး (တစ်နေ့ ၃ ကြိမ်၊ အစာစားပြီးသောက်ရန်)',
-            '၂။ Paracetamol 500mg - အဖျားကျ/အကိုက်အခဲပျောက်ဆေး (လိုအပ်လျှင် သောက်ရန်)',
-            'ဆေးဝါးအားလုံးကို ဆရာဝန် ညွှန်ကြားသည့်အတိုင်း အတိအကျ သောက်သုံးပါ။',
-        ] : [
-            'Prescription uploaded successfully.',
-            '1. Amoxicillin 500mg - Antibiotic (Take 3 times daily after meals)',
-            '2. Paracetamol 500mg - Pain reliever/Fever reducer (Take as needed)',
-            'Please take all medications exactly as prescribed by your doctor.',
-        ],
-        disclaimer: getDisclaimer(lang)
-    };
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        return {
+            insights: lang === 'my' ? [
+                'ဆေးစာရွက်ကို လက်ခံရရှိပါပြီ။',
+                'API ချိတ်ဆက်မှု မရှိသောကြောင့် သရုပ်ပြ ရလဒ်ဖြစ်ပါသည်။',
+                'ဆေးဝါးအားလုံးကို ဆရာဝန် ညွှန်ကြားသည့်အတိုင်း အတိအကျ သောက်သုံးပါ။',
+            ] : [
+                'Prescription received.',
+                'This is a demo result — no API connection configured.',
+                'Always take medications exactly as prescribed by your doctor.',
+            ],
+            disclaimer,
+        };
+    }
+
+    try {
+        const base64Data = await imageToBase64(imageUri);
+
+        const systemPrompt = lang === 'my'
+            ? `သင်သည် ဆေးစာရွက်များကို ဖတ်ပြီး ရှင်းပြသည့် AI ဖြစ်ပါသည်။
+စည်းမျဥ်းများ:
+1. ဆေးစာရွက်ထဲရှိ ဆေးဝါးတစ်ခုချင်းစီကို ရှင်းပြပါ
+2. ဆေးအမည် (အင်္ဂလိပ်) + အသုံးပြုပုံ (မြန်မာ) ပေးပါ
+3. ဆေးညွှန်းချက်အသစ် မပေးပါနှင့် — ရှိပြီးသား ဆေးစာရွက်ကိုသာ ရှင်းပြပါ
+4. အချက်တစ်ခုစီကို "•" နှင့် စတင်ပါ
+5. ဆရာဝန် ညွှန်ကြားချက်အတိုင်း သောက်ရန် အမြဲတိုက်တွန်းပါ
+6. မြန်မာဘာသာဖြင့်သာ ရေးပါ`
+            : `You are a prescription translator AI. Read the prescription image and explain each medication clearly.
+Rules:
+1. Identify each medication in the prescription
+2. For each medication provide: name, type (antibiotic, painkiller, etc.), dosage, and how to take it
+3. Do NOT prescribe new medications — only explain what's already in the prescription
+4. Start each point with "•"
+5. Always remind to follow the doctor's instructions
+6. Respond ONLY in English`;
+
+        const response = await measureTime('Prescription analysis', () => fetch(GEMINI_PROXY_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+                contents: [{
+                    role: 'user',
+                    parts: [
+                        {
+                            inlineData: {
+                                mimeType: 'image/jpeg',
+                                data: base64Data,
+                            },
+                        },
+                        {
+                            text: lang === 'my'
+                                ? 'ဤဆေးစာရွက်ကို ဖတ်ပြီး ဆေးဝါးတစ်ခုချင်းစီကို ရှင်းပြပါ။'
+                                : 'Read this prescription and explain each medication listed.',
+                        },
+                    ],
+                }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }],
+                },
+                generationConfig: {
+                    temperature: 0.3,
+                    maxOutputTokens: 800,
+                },
+                safetySettings: [
+                    { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+                ],
+            }),
+        }));
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error?.message || 'Prescription analysis failed');
+
+        const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!aiText) throw new Error('No prescription analysis response received');
+
+        trackEvent('image_analyzed', { mode: 'prescription', lang });
+        const insights = parseInsightsFromText(aiText);
+        return { insights, disclaimer };
+    } catch (error) {
+        captureError(error instanceof Error ? error : new Error(String(error)), { screen: 'Analysis' });
+        throw error;
+    }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────
+
+/** Convert and compress a local image URI to base64 string */
+async function imageToBase64(uri: string): Promise<string> {
+    try {
+        const manipResult = await manipulateAsync(
+            uri,
+            [{ resize: { width: 800 } }], // Resize large photos
+            { compress: 0.7, format: SaveFormat.JPEG, base64: true }
+        );
+        if (!manipResult.base64) throw new Error('Failed to extract base64 data');
+        return manipResult.base64;
+    } catch (e) {
+        console.warn('Image manipulation failed:', e);
+        throw e;
+    }
+}
+
+/** Parse AI text response into an array of insight strings */
+function parseInsightsFromText(text: string): string[] {
+    // Split by bullet points or numbered items
+    const lines = text
+        .split(/\n/)
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        // Remove bullet markers for clean display
+        .map(line => line.replace(/^(?:•|[-*]|\d+[.)]\s*)\s*/, '').trim())
+        .filter(line => line.length > 0);
+
+    // If we got meaningful lines, return them; otherwise return the whole text as one insight
+    return lines.length > 0 ? lines : [text.trim()];
 }
 
 export async function getVisitSummary(messages: ChatMessage[]): Promise<string> {

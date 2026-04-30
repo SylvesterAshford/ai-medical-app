@@ -167,6 +167,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontWeight: '600',
+    lineHeight: 26,
   },
   publicBadgeText: {
     color: colors.tealDark,
@@ -187,6 +188,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: '#9A7B2C',
+    lineHeight: 26,
   },
   distanceBadge: {
     flexDirection: 'row',
@@ -201,6 +203,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: colors.teal,
+    lineHeight: 26,
   },
   phoneRow: {
     flexDirection: 'row',

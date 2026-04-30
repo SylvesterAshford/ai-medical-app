@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import {
   View, Text, StyleSheet, FlatList, TextInput,
   TouchableOpacity, KeyboardAvoidingView, Platform,
-  Animated, Dimensions, Alert, Keyboard, TouchableWithoutFeedback,
+  Animated, Dimensions, Alert, Keyboard, TouchableWithoutFeedback, Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -78,7 +78,7 @@ function MessageBubble({ message }: MessageBubbleProps) {
       <View style={[styles.bubbleRow, isUser && styles.bubbleRowUser]}>
         {!isUser && (
           <View style={styles.aiAvatar}>
-            <Ionicons name="medical" size={16} color={colors.teal} />
+            <Image source={require('../../assets/logo.png')} style={[styles.aiAvatarLogo, { tintColor: colors.teal }]} resizeMode="contain" />
           </View>
         )}
         <View
@@ -343,8 +343,8 @@ export default function ChatScreen() {
   const welcomeMessage = useMemo<ChatMessage>(() => ({
     id: 'welcome_msg_system',
     text: language === 'my'
-      ? "မင်္ဂလာပါ! 👋 ကျွန်ုပ်သည် မြန်မာနိုင်ငံ၏ AI ကျန်းမာရေး လမ်းညွှန် ဖြစ်ပါသည်။ အထွေထွေ ကျန်းမာရေးမေးခွန်းများ ဖြေကြားခြင်း၊ ရောဂါလက္ခဏာ စစ်ဆေးခြင်းနှင့် အနီးဆုံးဆေးရုံများကို ရှာဖွေပေးနိုင်ပါသည်။\n\n⚠️ သတိပြုရန်: ကျွန်ုပ်သည် ဆရာဝန်မဟုတ်ပါ။ အရေးပေါ်ဖြစ်ပါက 192 သို့ ချက်ချင်းခေါ်ဆိုပါ။"
-      : "Hello! 👋 I'm Myanmar's AI health navigator. I can help with health questions, symptom checks, and finding nearby hospitals.\n\n⚠️ Disclaimer: I am not a doctor. In an emergency, dial 192 immediately.",
+      ? "မင်္ဂလာပါ! 👋 ကျွန်ုပ်သည် မြန်မာနိုင်ငံ၏ AI ကျန်းမာရေး လမ်းညွှန် ဖြစ်ပါသည်။ အထွေထွေ ကျန်းမာရေးမေးခွန်းများ ဖြေကြားခြင်း၊ ရောဂါလက္ခဏာ စစ်ဆေးခြင်းနှင့် အနီးဆုံးဆေးရုံများကို ရှာဖွေပေးနိုင်ပါသည်။\n\n⚠️ သတိပြုရန်: ကျွန်ုပ်သည် ဆရာဝန်မဟုတ်ပါ။ အရေးပေါ်ဖြစ်ပါက 119 သို့ ချက်ချင်းခေါ်ဆိုပါ။"
+      : "Hello! 👋 I'm Myanmar's AI health navigator. I can help with health questions, symptom checks, and finding nearby hospitals.\n\n⚠️ Disclaimer: I am not a doctor. In an emergency, dial 119 immediately.",
     sender: 'ai',
     timestamp: new Date(),
   }), [language]);
@@ -369,8 +369,8 @@ export default function ChatScreen() {
           style={styles.header}
         >
           <View style={styles.headerContent}>
-            <View style={styles.headerAvatar}>
-              <Ionicons name="medical" size={22} color={colors.white} />
+            <View style={styles.headerAvatarContainer}>
+              <Image source={require('../../assets/logo.png')} style={[styles.headerAvatar, { tintColor: colors.teal }]} resizeMode="contain" />
             </View>
             <View>
               <Text style={styles.headerTitle}>
@@ -396,7 +396,7 @@ export default function ChatScreen() {
               onPress={() => navigation.navigate('HospitalFinder', {})}
               style={styles.headerBtn}
             >
-              <Ionicons name="medical" size={18} color={colors.teal} />
+              <Ionicons name="map" size={18} color={colors.teal} />
             </TouchableOpacity>
           </View>
         </LinearGradient>
@@ -533,19 +533,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  headerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.teal,
+  headerAvatarContainer: {
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
   },
+  headerAvatar: {
+    width: 38,
+    height: 38,
+  },
   headerTitle: {
     ...typography.h3,
     fontSize: 16,
-    paddingTop: 4,
   },
   headerStatus: {
     ...typography.caption,
@@ -583,11 +584,14 @@ const styles = StyleSheet.create({
   aiAvatar: {
     width: 28,
     height: 28,
-    borderRadius: 14,
-    backgroundColor: '#E8F8F8',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.sm,
+    marginBottom: 4,
+  },
+  aiAvatarLogo: {
+    width: 28,
+    height: 28,
   },
   bubble: {
     maxWidth: width * 0.72,
@@ -605,10 +609,10 @@ const styles = StyleSheet.create({
     ...shadows.card,
   },
   bubbleText: {
-    ...typography.body,
     fontSize: 15,
-
-    paddingTop: 4,
+    fontWeight: '400' as const,
+    color: colors.text,
+    lineHeight: 28,
   },
   userBubbleText: {
     color: colors.text,
@@ -668,10 +672,14 @@ const styles = StyleSheet.create({
     ...typography.h2,
     color: colors.teal,
     marginBottom: spacing.sm,
+    textAlign: 'center',
+    lineHeight: 28,
   },
   emptySubtitle: {
     ...typography.body,
     color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 26,
   },
 
   // Input bar
@@ -713,7 +721,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: spacing.md,
-    paddingVertical: Platform.OS === 'ios' ? 6 : 0,
     marginRight: spacing.xs,
     minHeight: 48,
     maxHeight: 120,
@@ -721,10 +728,9 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-
+    lineHeight: 24,
     color: colors.text,
-    paddingTop: Platform.OS === 'ios' ? 8 : 10,
-    paddingBottom: Platform.OS === 'ios' ? 8 : 10,
+    paddingVertical: 0,
     paddingHorizontal: 0,
     maxHeight: 80,
     textAlignVertical: 'center',

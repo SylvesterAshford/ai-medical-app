@@ -45,7 +45,7 @@ export default function DisclaimerModal({ visible, onAccept }: Props) {
           <View style={styles.checkRow}>
             <Ionicons name="alert-circle" size={20} color={colors.warning} />
             <Text style={styles.checkText}>
-              {language === 'my' ? 'အရေးပေါ်အတွက် 192 သို့ ခေါ်ဆိုပါ' : 'For emergencies, always call local emergency services'}
+              {language === 'my' ? 'အရေးပေါ်အတွက် 119 သို့ ခေါ်ဆိုပါ' : 'For emergencies, always call local emergency services'}
             </Text>
           </View>
 
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   body: {
     ...typography.bodySmall,
     textAlign: 'center',
-
+    lineHeight: 26,
     marginBottom: spacing.lg,
   },
   divider: {
@@ -115,6 +115,7 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     marginLeft: spacing.sm,
     flex: 1,
+    lineHeight: 28,
   },
   button: {
     marginTop: spacing.lg,

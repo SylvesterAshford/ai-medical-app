@@ -60,9 +60,6 @@ const styles = StyleSheet.create({
     color: colors.white,
     textAlign: 'center',
     textAlignVertical: 'center',
-    includeFontPadding: false,
-    paddingTop: Platform.OS === 'ios' ? 8 : 4,
-    paddingBottom: Platform.OS === 'ios' ? 0 : 4,
   },
   disabled: {
     opacity: 0.5,

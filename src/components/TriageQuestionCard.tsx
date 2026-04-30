@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     textAlign: 'center',
     marginBottom: spacing.sm,
-
+    lineHeight: 28,
   },
   questionEn: {
     ...typography.body,
@@ -163,5 +163,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: colors.textSecondary,
+    lineHeight: 28,
   },
 });

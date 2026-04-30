@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, ActivityIndicator, Dimensions, Switch,
+  Image, ActivityIndicator, Dimensions, Switch, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -13,8 +13,104 @@ import GradientButton from '../components/GradientButton';
 import { colors, spacing, typography, borderRadius, shadows, gradients } from '../theme';
 import { analyzeImage, explainPrescription } from '../services/ai';
 import { useAppStore } from '../store/useAppStore';
+import Markdown from 'react-native-markdown-display';
 
 const { width } = Dimensions.get('window');
+
+// Compact markdown styles for AI analysis results
+const markdownStyles = {
+  body: {
+    fontSize: 14,
+    color: colors.text,
+    lineHeight: 28,
+  },
+  heading1: {
+    fontSize: 17,
+    fontWeight: '700' as const,
+    color: colors.teal,
+    marginTop: 8,
+    marginBottom: 2,
+    lineHeight: 34,
+  },
+  heading2: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: colors.teal,
+    marginTop: 8,
+    marginBottom: 2,
+    lineHeight: 30,
+  },
+  heading3: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: colors.text,
+    marginTop: 6,
+    marginBottom: 2,
+    lineHeight: 28,
+  },
+  paragraph: {
+    fontSize: 14,
+    color: colors.text,
+    lineHeight: 28,
+    marginBottom: 4,
+    marginTop: 0,
+  },
+  strong: {
+    fontWeight: '700' as const,
+    color: colors.teal,
+  },
+  em: {
+    fontStyle: 'italic' as const,
+    color: colors.textSecondary,
+  },
+  bullet_list: {
+    marginBottom: 4,
+    marginTop: 0,
+  },
+  ordered_list: {
+    marginBottom: 4,
+    marginTop: 0,
+  },
+  list_item: {
+    marginBottom: 2,
+    flexDirection: 'row' as const,
+  },
+  bullet_list_icon: {
+    color: colors.teal,
+    fontSize: 14,
+    lineHeight: 28,
+    marginRight: 6,
+  },
+  ordered_list_icon: {
+    color: colors.teal,
+    fontSize: 14,
+    fontWeight: '600' as const,
+    lineHeight: 28,
+    marginRight: 6,
+  },
+  fence: {
+    backgroundColor: '#F0F4F4',
+    borderRadius: 6,
+    padding: 8,
+    fontFamily: 'monospace',
+    fontSize: 13,
+  },
+  blockquote: {
+    backgroundColor: '#E8F8F8',
+    borderLeftColor: colors.teal,
+    borderLeftWidth: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 4,
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  hr: {
+    backgroundColor: colors.border,
+    height: 1,
+    marginVertical: 6,
+  },
+};
 
 export default function ImageAnalysisScreen({ navigation }: any) {
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -27,33 +123,61 @@ export default function ImageAnalysisScreen({ navigation }: any) {
   const language = useAppStore(s => s.language);
 
   const pickImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return;
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          language === 'my' ? 'ခွင့်ပြုချက် လိုအပ်ပါသည်' : 'Permission Required',
+          language === 'my' ? 'ဓာတ်ပုံများ ရွေးချယ်ရန် ဓာတ်ပုံပြခန်း ခွင့်ပြုချက် လိုအပ်ပါသည်' : 'Photo library permission is required to pick images',
+        );
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-      allowsEditing: true,
-    });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+        allowsEditing: true,
+      });
 
-    if (!result.canceled && result.assets[0]) {
-      setImageUri(result.assets[0].uri);
-      setResults(null);
+      if (!result.canceled && result.assets[0]) {
+        setImageUri(result.assets[0].uri);
+        setResults(null);
+      }
+    } catch (error) {
+      console.warn('Image picker error:', error);
+      Alert.alert(
+        language === 'my' ? 'အမှားတစ်ခု ဖြစ်ပွားခဲ့သည်' : 'Error',
+        language === 'my' ? 'ပုံရွေးချယ်ရာတွင် အမှားတစ်ခု ဖြစ်ပွားခဲ့သည်' : 'Failed to pick image. Please try again.',
+      );
     }
   };
 
   const takePhoto = async () => {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) return;
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          language === 'my' ? 'ခွင့်ပြုချက် လိုအပ်ပါသည်' : 'Permission Required',
+          language === 'my' ? 'ဓာတ်ပုံရိုက်ရန် ကင်မရာ ခွင့်ပြုချက် လိုအပ်ပါသည်' : 'Camera permission is required to take photos',
+        );
+        return;
+      }
 
-    const result = await ImagePicker.launchCameraAsync({
-      quality: 0.8,
-      allowsEditing: true,
-    });
+      const result = await ImagePicker.launchCameraAsync({
+        quality: 0.8,
+        allowsEditing: true,
+      });
 
-    if (!result.canceled && result.assets[0]) {
-      setImageUri(result.assets[0].uri);
-      setResults(null);
+      if (!result.canceled && result.assets[0]) {
+        setImageUri(result.assets[0].uri);
+        setResults(null);
+      }
+    } catch (error) {
+      console.warn('Camera error:', error);
+      Alert.alert(
+        language === 'my' ? 'အမှားတစ်ခု ဖြစ်ပွားခဲ့သည်' : 'Error',
+        language === 'my' ? 'ကင်မရာ ဖွင့်ရာတွင် အမှားတစ်ခု ဖြစ်ပွားခဲ့သည်' : 'Failed to open camera. Please try again.',
+      );
     }
   };
 
@@ -101,8 +225,8 @@ export default function ImageAnalysisScreen({ navigation }: any) {
 
         {/* Mode Toggle */}
         <View style={styles.modeToggleContainer}>
-          <Text style={[styles.modeText, !isPrescriptionMode && styles.activeModeText]}>
-            {language === 'my' ? 'အထွေထွေ ပုံစံ' : 'General Analysis'}
+          <Text style={[styles.modeText, !isPrescriptionMode && styles.activeModeText, { fontSize: language === 'my' ? 12 : 14 }]} numberOfLines={1}>
+            {language === 'my' ? 'အထွေထွေ ပုံစံ' : 'General'}
           </Text>
           <Switch
             value={isPrescriptionMode}
@@ -110,8 +234,8 @@ export default function ImageAnalysisScreen({ navigation }: any) {
             trackColor={{ false: colors.textSecondary, true: colors.teal }}
             thumbColor={colors.white}
           />
-          <Text style={[styles.modeText, isPrescriptionMode && styles.activeModeText]}>
-            {language === 'my' ? 'ဆေးစာရွက် ရှင်းပြခြင်း' : 'Prescription Translator'}
+          <Text style={[styles.modeText, isPrescriptionMode && styles.activeModeText, { fontSize: language === 'my' ? 12 : 14 }]} numberOfLines={1}>
+            {language === 'my' ? 'ဆေးစာရွက် ရှင်းပြခြင်း' : 'Prescription'}
           </Text>
         </View>
 
@@ -168,25 +292,18 @@ export default function ImageAnalysisScreen({ navigation }: any) {
             <Text style={styles.resultsTitle}>{language === 'my' ? 'ခွဲခြမ်းစိတ်ဖြာ ရလဒ်များ' : 'Analysis Results'}</Text>
 
             <Card style={styles.resultsCard}>
-              {results.insights.map((insight, index) => (
-                <View key={index} style={styles.insightRow}>
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={18}
-                    color={colors.success}
-                  />
-                  <Text style={styles.insightText}>{insight}</Text>
-                </View>
-              ))}
+              <Markdown style={markdownStyles}>
+                {results.insights.join('\n')}
+              </Markdown>
             </Card>
 
-            <Card style={styles.disclaimerCard}>
+            <View style={styles.disclaimerCard}>
               <View style={styles.disclaimerRow}>
-                <Ionicons name="warning" size={18} color={colors.warning} />
+                <Ionicons name="warning" size={16} color={colors.warning} />
                 <Text style={styles.disclaimerTitle}>{language === 'my' ? 'သတိပေးချက်' : 'Disclaimer'}</Text>
               </View>
               <Text style={styles.disclaimerText}>{results.disclaimer}</Text>
-            </Card>
+            </View>
           </View>
         )}
 
@@ -204,9 +321,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 60,
+    paddingTop: 58,
     paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.md,
   },
   backBtn: {
     width: 36,
@@ -219,34 +336,35 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...typography.h2,
-    // Nudge down to avoid clipping Burmese glyph tops
-    paddingTop: 4,
   },
 
   description: {
     ...typography.bodySmall,
     paddingHorizontal: spacing.xxl,
     marginBottom: spacing.lg,
-
     textAlign: 'center',
+    lineHeight: 26,
   },
 
   modeToggleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
     backgroundColor: colors.white,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    marginHorizontal: spacing.xxl,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    marginHorizontal: spacing.xl,
     borderRadius: borderRadius.md,
     ...shadows.card,
   },
   modeText: {
-    ...typography.bodySmall,
+    fontSize: 12,
+    fontWeight: '500' as const,
     color: colors.textSecondary,
-    marginHorizontal: spacing.sm,
+    lineHeight: 22,
+    flex: 1,
+    textAlign: 'center',
   },
   activeModeText: {
     color: colors.teal,
@@ -311,10 +429,11 @@ const styles = StyleSheet.create({
     ...shadows.card,
   },
   cameraText: {
-    ...typography.body,
+    fontSize: 14,
     color: colors.teal,
     fontWeight: '600',
     marginLeft: spacing.sm,
+    lineHeight: 28,
   },
 
   analyzeBtn: {
@@ -330,6 +449,9 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textSecondary,
     marginTop: spacing.md,
+    lineHeight: 26,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xl,
   },
 
   // Results
@@ -342,7 +464,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   resultsCard: {
-    marginBottom: spacing.lg,
+    marginBottom: 4,
   },
   insightRow: {
     flexDirection: 'row',
@@ -350,28 +472,35 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   insightText: {
-    ...typography.body,
+    fontSize: 14,
+    fontWeight: '400' as const,
+    color: colors.text,
     flex: 1,
     marginLeft: spacing.md,
-    fontSize: 14,
+    lineHeight: 26,
   },
   disclaimerCard: {
     backgroundColor: '#FFF9E6',
+    padding: 12,
+    borderRadius: 12,
+    marginTop: 4,
   },
   disclaimerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.sm,
   },
   disclaimerTitle: {
-    ...typography.h3,
     fontSize: 14,
-    marginLeft: spacing.sm,
+    fontWeight: '600' as const,
+    marginLeft: 6,
     color: '#856404',
+    lineHeight: 28,
   },
   disclaimerText: {
-    ...typography.bodySmall,
+    fontSize: 13,
+    fontWeight: '400' as const,
     color: '#856404',
-
+    lineHeight: 26,
+    marginTop: 4,
   },
 });

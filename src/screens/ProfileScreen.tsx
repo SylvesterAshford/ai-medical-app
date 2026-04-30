@@ -147,7 +147,7 @@ export default function ProfileScreen({ navigation }: any) {
         </Card>
 
         {/* App version */}
-        <Text style={styles.version}>MediAI v1.0.0</Text>
+        <Text style={styles.version}>ZawgyiAI v1.0.0</Text>
 
         <View style={{ height: 120 }} />
       </ScrollView>
@@ -163,14 +163,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 68,
+    paddingTop: 58,
     paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.md,
   },
   backBtn: {},
   headerTitle: {
     ...typography.h2,
-    paddingTop: 6,
   },
 
   // Profile card
@@ -198,14 +197,15 @@ const styles = StyleSheet.create({
   profileInfo: {
     flex: 1,
     justifyContent: 'center',
+    marginLeft: 4, // slight nudge to align visually with the avatar circle
   },
   profileName: {
     ...typography.h3,
-    paddingTop: 0,
+    marginBottom: -4, // pull the handle closer to the name
   },
   profileEmail: {
     ...typography.bodySmall,
-    paddingTop: 0,
+    color: colors.textSecondary,
   },
   editBtn: {
     alignSelf: 'center',

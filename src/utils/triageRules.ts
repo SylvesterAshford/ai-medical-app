@@ -382,11 +382,11 @@ export function sanitizeAIResponse(text: string): string {
 // Language-aware disclaimer
 export function getDisclaimer(lang: 'en' | 'my'): string {
     if (lang === 'my') {
-        return '\n\n⚕️ ဒီ AI သည် ဆရာဝန်မဟုတ်ပါ။ အရေးပေါ် လက္ခဏာများရှိပါက ဆေးရုံသို့ ချက်ချင်းသွားပါ။';
+        return 'ဒီ AI သည် ဆရာဝန်မဟုတ်ပါ။ အရေးပေါ် လက္ခဏာများရှိပါက ဆေးရုံသို့ ချက်ချင်းသွားပါ။';
     }
-    return '\n\n⚕️ This AI is not a doctor. If you have emergency symptoms, go to the hospital immediately.';
+    return 'This AI is not a doctor. If you have emergency symptoms, go to the hospital immediately.';
 }
 
 // Myanmar emergency number
-export const MYANMAR_EMERGENCY_NUMBER = '192';
+export const MYANMAR_EMERGENCY_NUMBER = '119';
 

@@ -59,7 +59,7 @@ const translations = {
 
     // Emergency Screen
     'emergency.title': { en: 'EMERGENCY', my: 'အရေးပေါ်' },
-    'emergency.callNow': { en: 'Call 192 Now', my: '192 သို့ ခေါ်ဆိုပါ' },
+    'emergency.callNow': { en: 'Call 119 Now', my: '119 သို့ ခေါ်ဆိုပါ' },
     'emergency.calling': { en: 'Calling emergency services...', my: 'အရေးပေါ်ဝန်ဆောင်မှု ခေါ်ဆိုနေသည်...' },
     'emergency.desc': { en: 'If you are in a life-threatening situation, call emergency services immediately.', my: 'အသက်အန္တရာယ်ရှိသော အခြေအနေတွင် အရေးပေါ်ဝန်ဆောင်မှုကို ချက်ချင်းခေါ်ဆိုပါ။' },
     'emergency.nearbyHospital': { en: 'Find Nearby Hospital', my: 'အနီးဆုံးဆေးရုံ ရှာပါ' },

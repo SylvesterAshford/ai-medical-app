@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  KeyboardAvoidingView, Platform, Dimensions,
+  KeyboardAvoidingView, Platform, Dimensions, Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import GradientBackground from '../components/GradientBackground';
@@ -73,7 +73,7 @@ export default function LoginScreen({ navigation }: any) {
       >
         <View style={styles.topSection}>
           <View style={styles.logoBadge}>
-            <Ionicons name="medical" size={32} color={colors.white} />
+            <Image source={require('../../assets/logo.png')} style={[styles.logoImage, { tintColor: colors.teal }]} resizeMode="contain" />
           </View>
           <Text style={styles.title}>
             {isSignUp ? 'Create Account' : 'Welcome Back'}
@@ -204,13 +204,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxxl,
   },
   logoBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    backgroundColor: colors.teal,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.md,
+  },
+  logoImage: {
+    width: 56,
+    height: 56,
   },
   title: {
     ...typography.h1,
@@ -309,6 +309,5 @@ const styles = StyleSheet.create({
     marginTop: -spacing.sm,
     marginBottom: spacing.sm,
     marginLeft: spacing.lg,
-    paddingTop: 2,
   },
 });

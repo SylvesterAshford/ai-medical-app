@@ -70,7 +70,7 @@ export default function EmergencyScreen() {
 
         {/* Action buttons */}
         <View style={styles.actionSection}>
-          {/* Call 192 — Big prominent button */}
+          {/* Call 119 — Big prominent button */}
           <TouchableOpacity
             onPress={handleCallEmergency}
             activeOpacity={0.8}
@@ -171,12 +171,12 @@ const styles = StyleSheet.create({
     ...shadows.card,
   },
   mainTextMy: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '700',
     color: '#8B6914',
     textAlign: 'center',
     marginBottom: spacing.sm,
-
+    lineHeight: 40,
   },
   mainTextEn: {
     fontSize: 16,
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#9A7B2C',
     textAlign: 'center',
-
+    lineHeight: 28,
     marginBottom: spacing.xs,
   },
   subtextEn: {
@@ -225,14 +225,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emergencyBtnText: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '700',
     color: colors.white,
     marginBottom: 2,
+    lineHeight: 26,
   },
   emergencyBtnSub: {
     fontSize: 13,
     color: 'rgba(255,255,255,0.85)',
+    lineHeight: 28,
   },
   hospitalBtnWrap: {
     ...shadows.button,
@@ -244,9 +246,10 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   hospitalBtnText: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '600',
     color: colors.white,
+    lineHeight: 28,
   },
   hospitalBtnSub: {
     fontSize: 12,
@@ -263,6 +266,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     fontWeight: '500',
+    lineHeight: 28,
   },
 
   // Disclaimer
@@ -272,9 +276,9 @@ const styles = StyleSheet.create({
     borderTopColor: '#F0E4B8',
   },
   disclaimerText: {
-    fontSize: 11,
+    fontSize: 13,
     color: '#B8932E',
     textAlign: 'center',
-
+    lineHeight: 28,
   },
 });

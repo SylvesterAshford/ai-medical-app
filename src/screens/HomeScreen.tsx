@@ -3,7 +3,7 @@
 import React from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Dimensions, Platform,
+  Dimensions, Platform, Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -99,11 +99,9 @@ export default function HomeScreen({ navigation }: any) {
         >
           <View style={styles.headerTop}>
             <View style={styles.headerLeft}>
-              <View style={styles.avatar}>
-                <Ionicons name="person" size={24} color={colors.teal} />
-              </View>
-            <View>
-                <Text style={styles.headerLabel}>MediAI</Text>
+              <Image source={require('../../assets/logo.png')} style={[styles.avatar, { tintColor: colors.text }]} resizeMode="contain" />
+              <View>
+                <Text style={styles.headerLabel}>ZawgyiAI</Text>
                 <Text style={styles.headerSubLabel}>
                   {language === 'my' ? 'ပြန်လည်ကြိုဆိုပါသည်' : 'Welcome Back'}
                 </Text>
@@ -116,8 +114,8 @@ export default function HomeScreen({ navigation }: any) {
 
           <Text style={styles.greeting}>
             {language === 'my'
-              ? `${greeting} ဘာ${'\n'}ကူညီပေးရမလဲ?`
-              : `${greeting} How${'\n'}can I help you?`}
+              ? `${greeting}${'\n'}ဘာကူညီပေးရမလဲ?`
+              : `${greeting}${'\n'}How can I help you?`}
           </Text>
         </LinearGradient>
 
@@ -204,9 +202,9 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
-    paddingTop: 72,
+    paddingTop: 60,
     paddingHorizontal: spacing.xxl,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.xl,
     borderBottomLeftRadius: borderRadius.lg,
     borderBottomRightRadius: borderRadius.lg,
   },
@@ -214,28 +212,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.xl,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#E8F8F8',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
+    width: 38,
+    height: 38,
+    marginRight: 8,
   },
   headerLabel: {
     ...typography.h3,
     fontSize: 16,
+    lineHeight: 28,
   },
   headerSubLabel: {
     ...typography.bodySmall,
     fontSize: 12,
+    lineHeight: 26,
   },
   notifBell: {
     width: 40,
@@ -248,7 +244,7 @@ const styles = StyleSheet.create({
   },
   greeting: {
     ...typography.h1,
-    fontSize: 26,
+    fontSize: 24,
   },
 
   // Feature cards
@@ -281,11 +277,13 @@ const styles = StyleSheet.create({
   featureTitle: {
     ...typography.h3,
     fontSize: 15,
+    lineHeight: 26,
     marginBottom: spacing.xs,
   },
   featureSubtitle: {
     ...typography.bodySmall,
-    fontSize: 12,
+    fontSize: 13,
+    lineHeight: 28,
     marginBottom: spacing.sm,
   },
   featureBtn: {
@@ -327,11 +325,13 @@ const styles = StyleSheet.create({
   topicTitle: {
     ...typography.h3,
     fontSize: 14,
+    lineHeight: 26,
     marginBottom: spacing.xs,
   },
   topicDesc: {
     ...typography.bodySmall,
     fontSize: 12,
+    lineHeight: 26,
     marginBottom: spacing.md,
   },
   topicBtn: {

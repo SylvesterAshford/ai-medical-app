@@ -1,4 +1,4 @@
-<![CDATA[# 🏥 ZawgyiAI — AI-Powered Health Navigator for Myanmar
+# 🏥 ZawgyiAI — AI-Powered Health Navigator for Myanmar
 
 <div align="center">
 
@@ -604,4 +604,4 @@ This project is private. All rights reserved.
 *ZawgyiAI — Making healthcare accessible, one conversation at a time.*
 
 </div>
-]]>
+
